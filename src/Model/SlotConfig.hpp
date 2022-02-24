@@ -4,7 +4,7 @@
 #include "EffectData.hpp"
 
 struct SlotConfig {
-	EffectData effects[(uint8_t)EffectData::Type::SIZE - 1];
+	EffectData effects[(uint8_t)EffectData::Type::COUNT] = {0};
 	enum class SampleType : uint8_t {
 		KICK, SNARE, CLAP, CLOSEDHIHAT, OPENHIHAT, RIMSHOT, BASS, RECORDING
 	} sample = SampleType::KICK;
