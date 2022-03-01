@@ -1,13 +1,11 @@
 #include "EditSlot.h"
-#include <SPIFFS.h>
 #include <Audio/Effects/LowPass.h>
 #include <Audio/Effects/HighPass.h>
 #include <Audio/Effects/Reverb.h>
 #include <Audio/Effects/BitCrusher.h>
 
-const char* sampleNames[] = {"KICK", "SNARE", "CLAP", "CLOSEDHIHAT", "OPENHIHAT", "RIMSHOT", "BASS", "RECORDING"};
-//effect types LOWPASS, HIGHPASS, REVERB, BITCRUSHER, VOLUME, COUNT
-EditSlot::EditSlot(SlotConfig config) : playback(openFile(config)), speeder(&playback.getSource()), effector(&speeder){
+EditSlot::EditSlot(SlotConfig config) : sample(openSample(config)), playback(RamFile::open(sample)), speeder(&playback.getSource()),
+										effector(&speeder){
 	speeder.setSpeed(config.speed);
 	effects[0] = new LowPass();
 	effects[1] = new HighPass();
@@ -18,9 +16,10 @@ EditSlot::EditSlot(SlotConfig config) : playback(openFile(config)), speeder(&pla
 	}
 }
 
-File EditSlot::openFile(SlotConfig config){
-	File file = SPIFFS.open(String("/Samples/") + sampleNames[uint8_t(config.sample)] + ".aac");
-	return file;
+EditSlot::~EditSlot(){
+	for(auto effect: effects){
+		delete effect;
+	}
 }
 
 void EditSlot::setEffect(EffectData::Type type, uint8_t intensity){
@@ -37,6 +36,13 @@ void EditSlot::setEffect(EffectData::Type type, uint8_t intensity){
 }
 
 void EditSlot::setSpeed(uint8_t speed){
-	speeder.setSpeed((float)speed /  255.0);
+	speeder.setSpeed((float)speed / 255.0);
 }
 
+Generator & EditSlot::getGenerator(){
+	return playback.getGenerator();
+}
+
+void EditSlot::seek(size_t pos, SeekMode mode){
+	playback.seek(pos, mode);
+}

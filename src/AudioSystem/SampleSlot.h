@@ -5,10 +5,13 @@
 
 class SampleSlot {
 public:
+	virtual ~SampleSlot(){};
+
 	void play(){
-		getSource().seek(0);
+		seek(0, fs::SeekSet);
 	}
-	virtual Source& getSource() = 0;
+	virtual void seek(size_t pos, SeekMode mode) = 0;
+	virtual Generator & getGenerator() = 0;
 };
 
 
