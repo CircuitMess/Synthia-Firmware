@@ -14,7 +14,7 @@ const i2s_config_t config = {
 		.channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
 		.communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
 		.intr_alloc_flags = 0,
-		.dma_buf_count = 16,
+		.dma_buf_count = 2,
 		.dma_buf_len = 512,
 		.use_apll = false,
 		.tx_desc_auto_clear = true,
@@ -22,26 +22,22 @@ const i2s_config_t config = {
 };
 
 
-PlaybackSystem::PlaybackSystem() : output(config, i2s_pin_config, I2S_NUM_0){
+PlaybackSystem::PlaybackSystem() : output(config, i2s_pin_config, I2S_NUM_0), jobs(15, sizeof(AudioJob)){
 	output.setSource(&mixer);
 //	output.setGain(0.2);
 }
 
 void PlaybackSystem::loop(uint micros){
-	jobsMutex.lock();
-	if(!jobs.empty()){
-		auto job = jobs.front();
+	if(jobs.count()){
+		AudioJob job;
+		bool check = jobs.receive(&job);
 		processJob(job);
-		jobs.pop();
 	}
-	jobsMutex.unlock();
 	output.loop(0);
 }
 
 void PlaybackSystem::block(uint8_t slot){
-	jobsMutex.lock();
-	jobs.push({AudioJob::SET, slot, nullptr});
-	jobsMutex.unlock();
+	jobs.send(new AudioJob{AudioJob::SET, slot, nullptr});
 }
 
 void PlaybackSystem::init(){
@@ -60,23 +56,17 @@ void PlaybackSystem::init(){
 }
 
 void PlaybackSystem::play(uint8_t slot){
-	jobsMutex.lock();
-	jobs.push({AudioJob::PLAY, slot, nullptr});
-	jobsMutex.unlock();
+	jobs.send(new AudioJob{AudioJob::PLAY, slot, nullptr});
 }
 
 void PlaybackSystem::set(uint8_t slot, File file){
 	auto temp = new PlaybackSlot(std::move(file));
-	jobsMutex.lock();
-	jobs.push({AudioJob::SET, slot, temp});
-	jobsMutex.unlock();
+	jobs.send(new AudioJob{AudioJob::SET, slot, temp});
 }
 
 EditSlot PlaybackSystem::edit(uint8_t slot, SlotConfig config){
 	auto temp = new EditSlot(config);
-	jobsMutex.lock();
-	jobs.push({AudioJob::SET, slot, temp});
-	jobsMutex.unlock();
+	jobs.send(new AudioJob{AudioJob::SET, slot, temp});
 }
 
 void PlaybackSystem::processJob(AudioJob &job){

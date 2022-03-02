@@ -8,6 +8,7 @@
 #include <Audio/Mixer.h>
 #include <Audio/OutputI2S.h>
 #include <Sync/Mutex.h>
+#include <Sync/Queue.h>
 
 struct AudioJob {
 	enum {
@@ -32,8 +33,7 @@ private:
 	OutputI2S output;
 
 	SampleSlot* slots[5];
-	std::queue<AudioJob> jobs;
-	Mutex jobsMutex;
+	Queue jobs;
 	void processJob(AudioJob &job);
 };
 
