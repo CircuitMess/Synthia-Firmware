@@ -44,7 +44,8 @@ void PlaybackSystem::init(){
 	//TODO - create EditSlots with config from SlotManager, bake, init PlaybackSlots with RamFile from baking
 	for(int i = 4; i >= 0; --i){
 		SlotConfig conf;
-		conf.sample = SlotConfig::SampleType(i);
+		conf.sample.sample = Sample::SampleType(i);
+		conf.sample.fileIndex = i;
 		conf.slotIndex = i;
 
 		File temp = openSample(conf);
