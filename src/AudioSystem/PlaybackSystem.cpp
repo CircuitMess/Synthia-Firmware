@@ -30,7 +30,7 @@ PlaybackSystem::PlaybackSystem() : output(config, i2s_pin_config, I2S_NUM_0), jo
 void PlaybackSystem::loop(uint micros){
 	if(jobs.count()){
 		AudioJob job;
-		bool check = jobs.receive(&job);
+		jobs.receive(&job);
 		processJob(job);
 	}
 	output.loop(0);
@@ -42,7 +42,7 @@ void PlaybackSystem::block(uint8_t slot){
 
 void PlaybackSystem::init(){
 	//TODO - create EditSlots with config from SlotManager, bake, init PlaybackSlots with RamFile from baking
-	for(int i = 4; i >= 0; --i){
+	for(int i = 0; i < 5; ++i){
 		SlotConfig conf;
 		conf.sample.sample = Sample::SampleType(i);
 		conf.sample.fileIndex = i;
@@ -65,9 +65,10 @@ void PlaybackSystem::set(uint8_t slot, File file){
 	jobs.send(new AudioJob{AudioJob::SET, slot, temp});
 }
 
-EditSlot PlaybackSystem::edit(uint8_t slot, SlotConfig config){
+EditSlot* PlaybackSystem::edit(uint8_t slot, SlotConfig config){
 	auto temp = new EditSlot(config);
 	jobs.send(new AudioJob{AudioJob::SET, slot, temp});
+	return temp;
 }
 
 void PlaybackSystem::processJob(AudioJob &job){
@@ -80,6 +81,7 @@ void PlaybackSystem::processJob(AudioJob &job){
 			break;
 		case AudioJob::SET:
 			delete slots[job.slot];
+			mixer.setSource(job.slot, &job.sampleSlot->getGenerator());
 			slots[job.slot] = job.sampleSlot;
 			break;
 	}

@@ -24,7 +24,7 @@ public:
 	void init();
 	void play(uint8_t slot);
 	void set(uint8_t slot, File file);
-	EditSlot edit(uint8_t slot, SlotConfig config);
+	EditSlot* edit(uint8_t slot, SlotConfig config);
 	void block(uint8_t slot);
 	void loop(uint micros) override;
 

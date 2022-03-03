@@ -15,3 +15,7 @@ void PlaybackSlot::seek(size_t pos, SeekMode mode){
 SourceWAV & PlaybackSlot::getSource(){
 	return source;
 }
+
+PlaybackSlot::~PlaybackSlot(){
+
+}

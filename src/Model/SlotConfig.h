@@ -5,10 +5,16 @@
 #include <SPIFFS.h>
 
 struct SlotConfig {
-	EffectData effects[(uint8_t)EffectData::Type::COUNT];
+	EffectData effects[(uint8_t)EffectData::Type::COUNT] = {
+			{EffectData::Type::LOWPASS, 0},
+			{EffectData::Type::HIGHPASS, 0},
+			{EffectData::Type::REVERB, 0},
+			{EffectData::Type::BITCRUSHER, 0},
+			{EffectData::Type::VOLUME, 0}
+	};
 	Sample sample;
 	uint8_t slotIndex = 0;
-	uint8_t speed = 0;
+	uint8_t speed = 127;
 };
 
 File openSample(SlotConfig config);

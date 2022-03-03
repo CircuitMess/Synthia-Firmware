@@ -16,12 +16,15 @@ public:
 	void setSpeed(uint8_t speed);
 	Generator & getGenerator() override;
 	void seek(size_t pos, SeekMode mode) override;
-private:
-	PlaybackSlot playback;
-	EffectProcessor effector;
-	SpeedModifier speeder;
+	SlotConfig getConfig();
 
-	File sample;
+private:
+	SlotConfig config;
+	File sampleFile;
+	PlaybackSlot *playback;
+	SpeedModifier speeder;
+	EffectProcessor effector;
+
 	Effect* effects[4];
 };
 
