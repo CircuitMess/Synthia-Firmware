@@ -4,7 +4,7 @@
 #include "../SlotManager.h"
 //#include <Synthia.h>
 #include <JayD.h>
-
+#include "BakeSystem.h"
 #include <Loop/LoopManager.h>
 
 const i2s_config_t config = {
@@ -42,7 +42,7 @@ void PlaybackSystem::block(uint8_t slot){
 
 void PlaybackSystem::init(){
 	//TODO - create EditSlots with config from SlotManager, bake, init PlaybackSlots with RamFile from baking
-	for(int i = 0; i < 5; ++i){
+	for(int i = 0; i < 4; ++i){
 		SlotConfig conf;
 		conf.sample.sample = Sample::SampleType(i);
 		conf.sample.fileIndex = i;
@@ -53,6 +53,22 @@ void PlaybackSystem::init(){
 		temp.close();
 		mixer.addSource(&slots[i]->getGenerator());
 	}
+	//testing bake for 5th sample
+	SlotConfig conf;
+	conf.sample.sample = Sample::SampleType(4);
+	conf.sample.fileIndex = 4;
+	conf.slotIndex = 4;
+	conf.speed = 255;
+	conf.slotIndex = 0;
+	conf.effects[4].intensity = 255; //volume
+	conf.effects[3].intensity = 255; //bitcrusher
+
+	auto editSlot = new EditSlot(conf);
+
+	slots[4] = new PlaybackSlot(bakeSystem.bake(editSlot));
+	delete editSlot;
+	mixer.addSource(&slots[4]->getGenerator());
+
 	LoopManager::addListener(this);
 }
 

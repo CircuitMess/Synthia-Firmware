@@ -1,6 +1,13 @@
 #include <Arduino.h>
 #include <CircuitOS.h>
 #include <CMAudio.h>
+//#include <Synthia.h>
+//#include <Pins.hpp>
+
+#include <JayD.h>
+#include <Input/InputJayD.h>
+#include "src/AudioSystem/PlaybackSystem.h"
+#include <Loop/LoopManager.h>
 
 #include <esp_log.h>
 
@@ -14,14 +21,6 @@ void initLog(){
 	}
 }
 
-//#include <Synthia.h>
-//#include <Pins.hpp>
-
-#include <JayD.h>
-#include <Input/InputJayD.h>
-
-#include "src/AudioSystem/PlaybackSystem.h"
-#include <Loop/LoopManager.h>
 PlaybackSystem* ps;
 EditSlot* editSlot;
 uint8_t intensities[(uint8_t)EffectData::Type::COUNT] = {0};
