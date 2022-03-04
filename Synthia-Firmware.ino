@@ -1,6 +1,18 @@
 #include <Arduino.h>
-#include <CMAudio.h>
 #include <CircuitOS.h>
+#include <CMAudio.h>
+
+#include <esp_log.h>
+
+void initLog(){
+	esp_log_level_set("*", ESP_LOG_NONE);
+
+	const static auto tags = { "Synthia" };
+
+	for(const char* tag : tags){
+		esp_log_level_set(tag, ESP_LOG_VERBOSE);
+	}
+}
 
 //#include <Synthia.h>
 //#include <Pins.hpp>
@@ -18,6 +30,7 @@ void setup(){
 	Serial.begin(115200);
 //	Synthia.begin();
 	JayD.begin();
+	initLog();
 
 	ps = new PlaybackSystem();
 	ps->init();
@@ -73,8 +86,6 @@ void setup(){
 		editSlot->setEffect(EffectData::Type::BITCRUSHER, intensities[index]);
 	});
 }
-
-
 
 void loop(){
 	LoopManager::loop();
