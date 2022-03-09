@@ -4,6 +4,13 @@
 
 #include <esp_log.h>
 
+/*#include <Synthia.h>
+#include <Pins.hpp>*/
+
+#include "src/AudioSystem/Recorder.h"
+#include "src/AudioSystem/PlaybackSystem.h"
+#include <Loop/LoopManager.h>
+
 void initLog(){
 	esp_log_level_set("*", ESP_LOG_NONE);
 
@@ -14,79 +21,75 @@ void initLog(){
 	}
 }
 
-//#include <Synthia.h>
-//#include <Pins.hpp>
+void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
+	Serial.printf("Listing directory: %s\n", dirname);
 
-#include <JayD.h>
-#include <Input/InputJayD.h>
+	File root = fs.open(dirname);
+	if(!root){
+		Serial.println("Failed to open directory");
+		return;
+	}
+	if(!root.isDirectory()){
+		Serial.println("Not a directory");
+		return;
+	}
 
-#include "src/AudioSystem/PlaybackSystem.h"
-#include <Loop/LoopManager.h>
+	File file = root.openNextFile();
+	while(file){
+		if(file.isDirectory()){
+			Serial.print("  DIR : ");
+			Serial.println(file.name());
+			if(levels){
+				listDir(fs, file.name(), levels -1);
+			}
+		} else {
+			Serial.print("  FILE: ");
+			Serial.print(file.name());
+			Serial.print("  SIZE: ");
+			Serial.println(file.size());
+		}
+		file = root.openNextFile();
+	}
+}
+
+
+Recorder* rec;
 PlaybackSystem* ps;
 EditSlot* editSlot;
 uint8_t intensities[(uint8_t)EffectData::Type::COUNT] = {0};
 uint8_t speed;
+
+
 void setup(){
 	Serial.begin(115200);
-//	Synthia.begin();
-	JayD.begin();
+	SPIFFS.begin();
 	initLog();
 
 	ps = new PlaybackSystem();
 	ps->init();
 
-	SlotConfig config;
-	config.speed = 127;
-	config.sample.sample = Sample::SampleType::KICK;
-	config.slotIndex = 0;
-	config.effects[4].intensity = 255;
-	editSlot = ps->edit(0, config);
-
-/*	Input::getInstance()->setBtnPressCallback(BTN_1, [](){ps->play(0);});
-	Input::getInstance()->setBtnPressCallback(BTN_2, [](){ps->play(1);});
-	Input::getInstance()->setBtnPressCallback(BTN_3, [](){ps->play(2);});
-	Input::getInstance()->setBtnPressCallback(BTN_4, [](){ps->play(3);});
-	Input::getInstance()->setBtnPressCallback(BTN_5, [](){ps->play(4);});*/
-	auto input = InputJayD::getInstance();
+	ps->block(0);
+	ps->loop(0);
+	ps->play(0);
 
 
-	input->setBtnPressCallback(BTN_L1, [](){ps->play(0);});
-	input->setBtnPressCallback(BTN_L2, [](){ps->play(1);});
-	input->setBtnPressCallback(BTN_L3, [](){ps->play(2);});
-	input->setBtnPressCallback(BTN_R1, [](){ps->play(3);});
-	input->setBtnPressCallback(BTN_R2, [](){ps->play(4);});
-
-	input->setEncoderMovedCallback(ENC_L1, [](int8_t val){
-		uint8_t index = 4;
-		int temp = intensities[index] + val*17;
-		temp = min(temp, 255);
-		temp = max(temp, 0);
-		intensities[index] = temp;
-		Serial.println(temp);
-		editSlot->setEffect(EffectData::Type::VOLUME, intensities[index]);
-	});
-
-	input->setEncoderMovedCallback(ENC_L2, [](int8_t val){
-		uint8_t index = 4;
-		int temp = speed + val*17;
-		temp = min(temp, 255);
-		temp = max(temp, 0);
-		speed = temp;
-		Serial.println(temp);
-		editSlot->setSpeed(speed);
-	});
-
-	input->setEncoderMovedCallback(ENC_L3, [](int8_t val){
-		uint8_t index = 3;
-		int temp = intensities[index] + val*17;
-		temp = min(temp, 255);
-		temp = max(temp, 0);
-		intensities[index] = temp;
-		Serial.println(temp);
-		editSlot->setEffect(EffectData::Type::BITCRUSHER, intensities[index]);
-	});
+	rec = new Recorder(0);
+	Serial.println("created");
+	rec->start();
+	Serial.println("started");
 }
+bool played = false;
+
 
 void loop(){
+	if(rec->isRecorded() && !played){
+		SlotConfig conf;
+		conf.sample.sample = Sample::SampleType::RECORDING;
+		conf.sample.fileIndex = 0;
+		listDir(SPIFFS, "/", 2);
+		ps->set(0,  openSample(conf));
+		ps->play(0);
+		played = true;
+	}
 	LoopManager::loop();
 }

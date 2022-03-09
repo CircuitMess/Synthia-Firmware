@@ -3,15 +3,23 @@
 #include <utility>
 #include "../SlotManager.h"
 //#include <Synthia.h>
-#include <JayD.h>
 
 #include <Loop/LoopManager.h>
 
+const i2s_pin_config_t i2s_pin_config = {
+		.bck_io_num = 16,   // BCKL
+		.ws_io_num = 27,    // LRCL
+		.data_out_num = 4, // not used (only for speakers)
+		.data_in_num = 32
+};
+
+
+
 const i2s_config_t config = {
-		.mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX),
+		.mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_RX),
 		.sample_rate = SAMPLE_RATE,
 		.bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
-		.channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
+		.channel_format = I2S_CHANNEL_FMT_ONLY_RIGHT,
 		.communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
 		.intr_alloc_flags = 0,
 		.dma_buf_count = 2,
@@ -48,9 +56,13 @@ void PlaybackSystem::init(){
 		conf.sample.fileIndex = i;
 		conf.slotIndex = i;
 
-		File temp = openSample(conf);
-		slots[i] = new PlaybackSlot(RamFile::open(temp));
-		temp.close();
+
+		//not loading slot samples into ram because synthia doesnt have psram
+//		File temp = openSample(conf);
+		slots[i] = new PlaybackSlot(openSample(conf));
+//		slots[i] = new PlaybackSlot(RamFile::open(temp));
+//		temp.close();
+
 		mixer.addSource(&slots[i]->getGenerator());
 	}
 	LoopManager::addListener(this);
@@ -61,7 +73,7 @@ void PlaybackSystem::play(uint8_t slot){
 }
 
 void PlaybackSystem::set(uint8_t slot, File file){
-	auto temp = new PlaybackSlot(std::move(file));
+	auto temp = new PlaybackSlot(file);
 	jobs.send(new AudioJob{AudioJob::SET, slot, temp});
 }
 
@@ -80,7 +92,17 @@ void PlaybackSystem::processJob(AudioJob &job){
 			output.start();
 			break;
 		case AudioJob::SET:
-			delete slots[job.slot];
+			if(job.sampleSlot == nullptr){
+				mixer.pauseChannel(job.slot);
+				if(slots[job.slot] != nullptr){
+					delete slots[job.slot];
+					slots[job.slot] = nullptr;
+				}
+				return;
+			}
+
+			if(slots[job.slot] != nullptr) delete slots[job.slot];
+			mixer.resumeChannel(job.slot);
 			mixer.setSource(job.slot, &job.sampleSlot->getGenerator());
 			slots[job.slot] = job.sampleSlot;
 			break;

@@ -17,6 +17,6 @@ struct SlotConfig {
 	uint8_t speed = 127;
 };
 
-File openSample(SlotConfig config);
+File openSample(SlotConfig config, const char* mode = "r");
 
 #endif //SYNTHIA_FIRMWARE_SLOTCONFIG_H
