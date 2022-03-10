@@ -4,13 +4,6 @@
 
 #include <esp_log.h>
 
-/*#include <Synthia.h>
-#include <Pins.hpp>*/
-
-#include "src/AudioSystem/Recorder.h"
-#include "src/AudioSystem/PlaybackSystem.h"
-#include <Loop/LoopManager.h>
-
 void initLog(){
 	esp_log_level_set("*", ESP_LOG_NONE);
 
@@ -21,6 +14,10 @@ void initLog(){
 	}
 }
 
+//#include <Synthia.h>
+//#include <Pins.hpp>
+#include <JayD.h>
+#include <Input/InputJayD.h>
 void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
 	Serial.printf("Listing directory: %s\n", dirname);
 
@@ -52,44 +49,24 @@ void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
 	}
 }
 
-
-Recorder* rec;
+#include "src/AudioSystem/PlaybackSystem.h"
+#include "src/Services/SlotPlayer.h"
+#include <Loop/LoopManager.h>
 PlaybackSystem* ps;
 EditSlot* editSlot;
 uint8_t intensities[(uint8_t)EffectData::Type::COUNT] = {0};
 uint8_t speed;
 
-
 void setup(){
 	Serial.begin(115200);
-	SPIFFS.begin();
+//	Synthia.begin();
+	JayD.begin();
 	initLog();
 
-	ps = new PlaybackSystem();
-	ps->init();
-
-	ps->block(0);
-	ps->loop(0);
-	ps->play(0);
-
-
-	rec = new Recorder(0);
-	Serial.println("created");
-	rec->start();
-	Serial.println("started");
+	Playback.begin();
+	Player.begin();
 }
-bool played = false;
-
 
 void loop(){
-	if(rec->isRecorded() && !played){
-		SlotConfig conf;
-		conf.sample.sample = Sample::SampleType::RECORDING;
-		conf.sample.fileIndex = 0;
-		listDir(SPIFFS, "/", 2);
-		ps->set(0,  openSample(conf));
-		ps->play(0);
-		played = true;
-	}
 	LoopManager::loop();
 }

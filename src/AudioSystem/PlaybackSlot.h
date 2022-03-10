@@ -10,12 +10,16 @@ class PlaybackSlot : public SampleSlot {
 public:
 	PlaybackSlot(File file);
 	~PlaybackSlot() override;
-	Generator & getGenerator() override;
-	void seek(size_t pos, SeekMode mode) override;
-	SourceWAV & getSource ();
+
+	Generator& getGenerator() override;
+	SourceWAV& getSource();
+
+	void seek(size_t pos, SeekMode mode = SeekSet) override;
+
 private:
 	FileDataSource ds;
 	SourceWAV source;
+
 };
 
 

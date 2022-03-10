@@ -10,18 +10,20 @@
 
 class EditSlot : public SampleSlot {
 public:
-	EditSlot(SlotConfig config);
+	EditSlot(const SlotConfig& config);
 	~EditSlot() override;
+
 	void setEffect(EffectData::Type type, uint8_t intensity);
 	void setSpeed(uint8_t speed);
-	Generator & getGenerator() override;
-	void seek(size_t pos, SeekMode mode) override;
+
+	Generator& getGenerator() override;
 	SlotConfig getConfig();
+
+	void seek(size_t pos, SeekMode mode = SeekSet) override;
 
 private:
 	SlotConfig config;
-	File sampleFile;
-	PlaybackSlot *playback;
+	PlaybackSlot* playback;
 	SpeedModifier speeder;
 	EffectProcessor effector;
 
