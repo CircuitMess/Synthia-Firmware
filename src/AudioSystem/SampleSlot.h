@@ -10,7 +10,7 @@ public:
 	void play(){
 		seek(0, fs::SeekSet);
 	}
-	virtual void seek(size_t pos, SeekMode mode) = 0;
+	virtual void seek(size_t pos, SeekMode mode = SeekSet) = 0;
 	virtual Generator & getGenerator() = 0;
 };
 
