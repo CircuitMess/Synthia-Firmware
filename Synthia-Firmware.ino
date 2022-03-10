@@ -34,7 +34,7 @@ void setup(){
 	initLog();
 
 	playbackSystem.init();
-	slotPlayer.start();
+	Player.begin();
 }
 
 void loop(){

@@ -1,46 +1,42 @@
+#include <unordered_map>
 #include "SlotPlayer.h"
-#include <JayD.h>
 #include "../AudioSystem/PlaybackSystem.h"
+#include <Synthia.h>
 
-SlotPlayer slotPlayer;
+SlotPlayer Player;
 
-void SlotPlayer::start(){
-	//TODO - zamjeni jayd input sa input klasom
-	InputJayD::getInstance()->addListener(this);
+void SlotPlayer::begin(){
 	enable();
 }
 
-void SlotPlayer::buttonPress(uint8_t id){
-	if(!enabled) return;
-	//TODO - zamjeni jayd pin defineove sa synthijinim
-	switch(id){
-		case BTN_L1:
-			playOnInput(0);
-			break;
-		case BTN_L2:
-			playOnInput(1);
-			break;
-		case BTN_L3:
-			playOnInput(2);
-			break;
-		case BTN_R1:
-			playOnInput(3);
-			break;
-		case BTN_R2:
-			playOnInput(4);
-			break;
-		default:
-			break;
+void SlotPlayer::buttonPressed(uint id){
+	if(!enabled){
+		Synthia.getInput()->removeListener(this);
+		return;
 	}
 
+	static const std::unordered_map<uint8_t, uint8_t> KeyMap = {
+			{ BTN_1, 0 },
+			{ BTN_2, 1 },
+			{ BTN_3, 2 },
+			{ BTN_4, 3 },
+			{ BTN_5, 4 },
+	};
+
+	auto pair = KeyMap.find(id);
+	if(pair == KeyMap.end()) return;
+
+	playOnInput(pair->second);
 }
 
 void SlotPlayer::enable(){
 	enabled = true;
+	Synthia.getInput()->addListener(this);
 }
 
 void SlotPlayer::disable(){
 	enabled = false;
+	Synthia.getInput()->removeListener(this);
 }
 
 void SlotPlayer::play(uint8_t slot){

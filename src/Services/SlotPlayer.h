@@ -1,23 +1,22 @@
 #ifndef SYNTHIA_FIRMWARE_SLOTPLAYER_H
 #define SYNTHIA_FIRMWARE_SLOTPLAYER_H
 
-#include <Input/InputJayD.h>
-#include <cstdint>
+#include <Input/InputListener.h>
 
-class SlotPlayer : public JayDInputListener{
+class SlotPlayer : public InputListener {
 public:
-	void start();
+	void begin();
 	void enable();
 	void disable();
 	void play(uint8_t slot); //blue pulse
 
 private:
 	bool enabled = true;
-	void buttonPress(uint8_t id) override;
+	void buttonPressed(uint id) override;
 
 	void playOnInput(uint8_t slot); //green pulse
 };
 
-extern SlotPlayer slotPlayer;
+extern SlotPlayer Player;
 
 #endif //SYNTHIA_FIRMWARE_SLOTPLAYER_H
