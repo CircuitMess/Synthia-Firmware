@@ -1,11 +1,11 @@
 #include "BakeSystem.h"
 #include <Audio/OutputWAV.h>
 
-BakeSystem bakeSystem;
+BakeSystem SampleBaker;
 
 File BakeSystem::bake(EditSlot* slot){
 	File outFile = RamFile::open(nullptr, 0, false);
-	OutputWAV output = OutputWAV(outFile);
+	OutputWAV output(outFile);
 	output.setSource(&slot->getGenerator());
 
 	ESP_LOGI("Synthia", "start bake");
@@ -17,7 +17,6 @@ File BakeSystem::bake(EditSlot* slot){
 	}
 	temp = millis() - temp;
 	ESP_LOGV("Synthia", "bake done in %d ms", temp);
-
 
 	return outFile;
 }

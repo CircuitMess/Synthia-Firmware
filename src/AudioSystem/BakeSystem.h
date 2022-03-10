@@ -9,6 +9,6 @@ public:
 	File bake(EditSlot* slot);
 };
 
-extern BakeSystem bakeSystem;
+extern BakeSystem SampleBaker;
 
 #endif //SYNTHIA_FIRMWARE_BAKESYSTEM_H
