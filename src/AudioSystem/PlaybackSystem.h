@@ -40,5 +40,7 @@ private:
 	void processJob(AudioJob &job);
 };
 
+extern PlaybackSystem playbackSystem;
+
 
 #endif //SYNTHIA_FIRMWARE_PLAYBACKSYSTEM_H

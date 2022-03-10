@@ -3,6 +3,8 @@
 #include "../SlotManager.h"
 #include <Synthia.h>
 
+PlaybackSystem playbackSystem;
+
 const i2s_config_t config = {
 		.mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX),
 		.sample_rate = SAMPLE_RATE,
