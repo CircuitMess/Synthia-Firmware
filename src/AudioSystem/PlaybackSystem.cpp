@@ -2,8 +2,7 @@
 #include <SPIFFS.h>
 #include <utility>
 #include "../SlotManager.h"
-//#include <Synthia.h>
-#include <JayD.h>
+#include <Synthia.h>
 
 #include <Loop/LoopManager.h>
 
@@ -24,20 +23,6 @@ const i2s_config_t config = {
 
 PlaybackSystem::PlaybackSystem() : output(config, i2s_pin_config, I2S_NUM_0), jobs(15, sizeof(AudioJob)){
 	output.setSource(&mixer);
-//	output.setGain(0.2);
-}
-
-void PlaybackSystem::loop(uint micros){
-	if(jobs.count()){
-		AudioJob job;
-		jobs.receive(&job);
-		processJob(job);
-	}
-	output.loop(0);
-}
-
-void PlaybackSystem::block(uint8_t slot){
-	jobs.send(new AudioJob{AudioJob::SET, slot, nullptr});
 }
 
 void PlaybackSystem::init(){
@@ -56,6 +41,19 @@ void PlaybackSystem::init(){
 	LoopManager::addListener(this);
 }
 
+void PlaybackSystem::loop(uint micros){
+	if(jobs.count()){
+		AudioJob job;
+		jobs.receive(&job);
+		processJob(job);
+	}
+	output.loop(0);
+}
+
+void PlaybackSystem::block(uint8_t slot){
+	jobs.send(new AudioJob{AudioJob::SET, slot, nullptr});
+}
+
 void PlaybackSystem::play(uint8_t slot){
 	jobs.send(new AudioJob{AudioJob::PLAY, slot, nullptr});
 }
@@ -65,7 +63,7 @@ void PlaybackSystem::set(uint8_t slot, File file){
 	jobs.send(new AudioJob{AudioJob::SET, slot, temp});
 }
 
-EditSlot* PlaybackSystem::edit(uint8_t slot, SlotConfig config){
+EditSlot* PlaybackSystem::edit(uint8_t slot, const SlotConfig& config){
 	auto temp = new EditSlot(config);
 	jobs.send(new AudioJob{AudioJob::SET, slot, temp});
 	return temp;
