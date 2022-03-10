@@ -1,6 +1,6 @@
 #include "PlaybackSystem.h"
 #include <SPIFFS.h>
-#include "../SlotManager.h"
+#include "../SaveManager.h"
 #include <Synthia.h>
 
 PlaybackSystem Playback;
@@ -27,7 +27,7 @@ PlaybackSystem::PlaybackSystem() : output(config, i2s_pin_config, I2S_NUM_0), jo
 void PlaybackSystem::begin(){
 	if(task.running) return;
 
-	//TODO - create EditSlots with config from SlotManager, bake, init PlaybackSlots with RamFile from baking
+	//TODO - create EditSlots with config from SaveManager, bake, init PlaybackSlots with RamFile from baking
 	for(int i = 0; i < 5; ++i){
 		SlotConfig conf;
 		conf.sample.sample = Sample::SampleType(i);
