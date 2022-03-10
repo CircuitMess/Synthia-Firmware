@@ -1,10 +1,7 @@
 #include "PlaybackSystem.h"
 #include <SPIFFS.h>
-#include <utility>
 #include "../SlotManager.h"
 #include <Synthia.h>
-
-#include <Loop/LoopManager.h>
 
 const i2s_config_t config = {
 		.mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX),
@@ -21,11 +18,13 @@ const i2s_config_t config = {
 };
 
 
-PlaybackSystem::PlaybackSystem() : output(config, i2s_pin_config, I2S_NUM_0), jobs(15, sizeof(AudioJob)){
+PlaybackSystem::PlaybackSystem() : output(config, i2s_pin_config, I2S_NUM_0), jobs(15, sizeof(AudioJob)), task("Playback", PlaybackSystem::taskFunc, 4096, this){
 	output.setSource(&mixer);
 }
 
 void PlaybackSystem::init(){
+	if(task.running) return;
+
 	//TODO - create EditSlots with config from SlotManager, bake, init PlaybackSlots with RamFile from baking
 	for(int i = 0; i < 5; ++i){
 		SlotConfig conf;
@@ -38,16 +37,8 @@ void PlaybackSystem::init(){
 		temp.close();
 		mixer.addSource(&slots[i]->getGenerator());
 	}
-	LoopManager::addListener(this);
-}
 
-void PlaybackSystem::loop(uint micros){
-	if(jobs.count()){
-		AudioJob job;
-		jobs.receive(&job);
-		processJob(job);
-	}
-	output.loop(0);
+	task.start(0, 0);
 }
 
 void PlaybackSystem::block(uint8_t slot){
@@ -69,6 +60,19 @@ EditSlot* PlaybackSystem::edit(uint8_t slot, const SlotConfig& config){
 	return temp;
 }
 
+void PlaybackSystem::taskFunc(Task* task){
+	auto* system = static_cast<PlaybackSystem*>(task->arg);
+
+	while(task->running){
+		if(system->jobs.count()){
+			AudioJob job;
+			if(!system->jobs.receive(&job)) continue;
+			system->processJob(job);
+		}
+		system->output.loop(0);
+	}
+}
+
 void PlaybackSystem::processJob(AudioJob &job){
 	switch(job.type){
 		case AudioJob::PLAY:
@@ -84,5 +88,3 @@ void PlaybackSystem::processJob(AudioJob &job){
 			break;
 	}
 }
-
-

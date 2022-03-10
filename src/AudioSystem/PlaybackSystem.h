@@ -1,12 +1,10 @@
 #ifndef SYNTHIA_FIRMWARE_PLAYBACKSYSTEM_H
 #define SYNTHIA_FIRMWARE_PLAYBACKSYSTEM_H
 
-#include <FS/RamFile.h>
 #include "EditSlot.h"
-#include <Loop/LoopListener.h>
-#include <queue>
 #include <Audio/Mixer.h>
 #include <Audio/OutputI2S.h>
+#include <Util/Task.h>
 #include <Sync/Mutex.h>
 #include <Sync/Queue.h>
 
@@ -18,7 +16,7 @@ struct AudioJob {
 	SampleSlot* sampleSlot;
 };
 
-class PlaybackSystem : public LoopListener {
+class PlaybackSystem {
 public:
 	PlaybackSystem();
 	void init();
@@ -29,14 +27,16 @@ public:
 	EditSlot* edit(uint8_t slot, const SlotConfig& config);
 	void block(uint8_t slot);
 
-	void loop(uint micros) override;
-
 private:
 	Mixer mixer;
 	OutputI2S output;
-
 	SampleSlot* slots[5];
+
+	Task task;
 	Queue jobs;
+
+	static void taskFunc(Task* task);
+
 	void processJob(AudioJob &job);
 };
 
