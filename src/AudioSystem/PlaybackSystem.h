@@ -19,7 +19,7 @@ struct AudioJob {
 class PlaybackSystem {
 public:
 	PlaybackSystem();
-	void init();
+	void begin();
 
 	void play(uint8_t slot);
 
@@ -40,7 +40,7 @@ private:
 	void processJob(AudioJob &job);
 };
 
-extern PlaybackSystem playbackSystem;
+extern PlaybackSystem Playback;
 
 
 #endif //SYNTHIA_FIRMWARE_PLAYBACKSYSTEM_H

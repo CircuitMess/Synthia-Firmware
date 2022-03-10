@@ -33,7 +33,7 @@ void setup(){
 	JayD.begin();
 	initLog();
 
-	playbackSystem.init();
+	Playback.begin();
 	Player.begin();
 }
 

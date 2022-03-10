@@ -40,11 +40,11 @@ void SlotPlayer::disable(){
 }
 
 void SlotPlayer::play(uint8_t slot){
-	playbackSystem.play(slot);
+	Playback.play(slot);
 	//TODO - add RGBSlot blue blink
 }
 
 void SlotPlayer::playOnInput(uint8_t slot){
-	playbackSystem.play(slot);
+	Playback.play(slot);
 	//TODO - add RGBSlot green blink
 }

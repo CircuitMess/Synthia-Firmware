@@ -3,7 +3,7 @@
 #include "../SlotManager.h"
 #include <Synthia.h>
 
-PlaybackSystem playbackSystem;
+PlaybackSystem Playback;
 
 const i2s_config_t config = {
 		.mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX),
@@ -24,7 +24,7 @@ PlaybackSystem::PlaybackSystem() : output(config, i2s_pin_config, I2S_NUM_0), jo
 	output.setSource(&mixer);
 }
 
-void PlaybackSystem::init(){
+void PlaybackSystem::begin(){
 	if(task.running) return;
 
 	//TODO - create EditSlots with config from SlotManager, bake, init PlaybackSlots with RamFile from baking
