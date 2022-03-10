@@ -6,8 +6,8 @@
 struct EffectData {
 	enum class Type : uint8_t {
 		LOWPASS, HIGHPASS, REVERB, BITCRUSHER, VOLUME, COUNT
-	} type = Type::LOWPASS;
-	uint8_t intensity = 0;
+	} type;
+	uint8_t intensity;
 };
 
 #endif //SYNTHIA_FIRMWARE_EFFECTDATA_HPP
