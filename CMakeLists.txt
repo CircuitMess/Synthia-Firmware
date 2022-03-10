@@ -49,6 +49,8 @@ include_directories(${Arduino15}/packages/cm/hardware/esp32/1.4.2/libraries/Upda
 include_directories(${ArduinoLibs}/CMAudio/src)
 include_directories(${ArduinoLibs}/CircuitMess-Audio/src)
 include_directories(${ArduinoLibs}/Synthia-Library/src)
+include_directories(${ArduinoLibs}/JayD-Library/src)
+
 
 # Source directories
 file(GLOB_RECURSE SOURCES "src/**.cpp" "src/**.c" "src/**.hpp" "src/**.h")

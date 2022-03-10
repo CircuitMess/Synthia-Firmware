@@ -22,7 +22,7 @@ void initLog(){
 #include "src/AudioSystem/PlaybackSystem.h"
 #include "src/Services/SlotPlayer.h"
 #include <Loop/LoopManager.h>
-
+PlaybackSystem* ps;
 EditSlot* editSlot;
 uint8_t intensities[(uint8_t)EffectData::Type::COUNT] = {0};
 uint8_t speed;
