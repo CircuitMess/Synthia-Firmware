@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(Synthia-Firmware)
 set(PORT COM4)
-set(DEVICE cm:esp32:jayd)
+set(DEVICE cm:esp32:synthia)
 set(CMAKE_CXX_STANDARD 11)
 
 set(ROOT ${CMAKE_SOURCE_DIR})
@@ -46,10 +46,9 @@ include_directories(${Arduino15}/packages/cm/hardware/esp32/1.4.2/libraries/Open
 include_directories(${Arduino15}/packages/cm/hardware/esp32/1.4.2/libraries/LovyanGFX/src)
 include_directories(${Arduino15}/packages/cm/hardware/esp32/1.4.2/libraries/Update/src)
 
+include_directories(${ArduinoLibs}/CMAudio/src)
 include_directories(${ArduinoLibs}/CircuitMess-Audio/src)
 include_directories(${ArduinoLibs}/Synthia-Library/src)
-include_directories(${ArduinoLibs}/JayD-Library/src)
-
 
 # Source directories
 file(GLOB_RECURSE SOURCES "src/**.cpp" "src/**.c" "src/**.hpp" "src/**.h")
