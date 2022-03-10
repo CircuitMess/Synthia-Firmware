@@ -93,17 +93,7 @@ void PlaybackSystem::processJob(AudioJob &job){
 			output.start();
 			break;
 		case AudioJob::SET:
-			if(job.sampleSlot == nullptr){
-				mixer.pauseChannel(job.slot);
-				if(slots[job.slot] != nullptr){
-					delete slots[job.slot];
-					slots[job.slot] = nullptr;
-				}
-				return;
-			}
-
-			if(slots[job.slot] != nullptr) delete slots[job.slot];
-			mixer.resumeChannel(job.slot);
+			delete slots[job.slot];
 			mixer.setSource(job.slot, &job.sampleSlot->getGenerator());
 			slots[job.slot] = job.sampleSlot;
 			break;
