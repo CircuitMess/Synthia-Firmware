@@ -6,39 +6,40 @@
 #include <Loop/LoopListener.h>
 #include <Audio/OutputI2S.h>
 #include <Util/Task.h>
+#include <Setup.hpp>
 
 class Recorder{
 public:
 	Recorder(uint8_t slot);
+	virtual ~Recorder();
 
 	void start();
 	void stop();
-	bool isRecorded();
+	void commit(); //saves from RAM to SPIFFS
+
 	bool isRecording();
+	bool isRecorded();
 
 private:
-	void recordingTask();
-	void commit(); //saves from RAM to SPIFFS
-	void writeHeaderWAV(size_t size);
+	void recordFunc();
+	static void writeHeaderWAV(File& file, size_t size);
 
-	uint8_t* buf = nullptr;
-	size_t cursor = 0;
-	uint8_t slot = 0;
-	bool recording = false;
-	bool done = false;
+	uint8_t slot;
 
-	const uint8_t wavHeaderSize = 44;
-	const uint32_t i2sBufferSize = 1600;
-	const uint32_t sampleRate = 24000;
-	const float maxRecordTime = 1.0f; // in seconds
-	const uint wavFileSize = maxRecordTime * (float) sampleRate * 2.0f;
-	const uint32_t wavBufferSize = sizeof(int16_t) * i2sBufferSize / 4; // i2sBuffer is stereo by byte, wavBuffer is mono int16
-	const uint32_t numReadings = (maxRecordTime * sampleRate * 4) / i2sBufferSize; // time * sampleRate * 4 bytes per sample (sample is int16_t, 2 channels)
+	enum {
+		WAITING, RECORDING, DONE
+	} state = WAITING;
+
+	const float maxRecordTime = 2.0f; // in seconds
+	// i2s buffer: int16 stereo
+	// wav buffer: int16 mono
+	const size_t i2sBufferSize = BUFFER_SAMPLES * 4; // 2 channels * 2 bytes per sample
+	const size_t wavBufferSize = SAMPLE_RATE * BYTES_PER_SAMPLE * maxRecordTime;
+	const size_t maxSamples = SAMPLE_RATE * maxRecordTime; // time * sampleRate * 4 bytes per sample (sample is int16_t, 2 channels)
 
 	int16_t* wavBuffer;
 	char* i2sBuffer;
-	uint32_t wavTotalWritten = 0;
-	uint32_t recCounter = 0;
+	size_t sampleCount = 0;
 
 	OutputI2S i2s;
 	Task task;

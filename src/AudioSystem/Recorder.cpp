@@ -6,11 +6,13 @@
 #include <Data/FileDataSource.h>
 #include <Audio/SourceWAV.h>
 
-struct Header {
+static const char* TAG = "Recorder";
+
+struct HeaderWAV {
 	char RIFF[4];
 	uint32_t chunkSize;
 	char WAVE[4];
-	char fmt[3];
+	char fmt[4];
 	uint32_t fmtSize;
 	uint16_t audioFormat;
 	uint16_t numChannels;
@@ -46,44 +48,30 @@ const i2s_config_t recconfig = {
 
 
 Recorder::Recorder(uint8_t slot) : slot(slot), i2s(recconfig, pinconf), task("recTask", [](Task* task){
-																				 auto recorder = static_cast<Recorder*>(task->arg);
-																				 recorder->recordingTask();
-																			 },8192, this){
-
-}
-
-void Recorder::start(){
-	if(recording) return;
-
-	recording = true;
-	done = false;
-	free(buf);
-	buf = (uint8_t*)malloc(wavFileSize + wavHeaderSize);
+	auto recorder = static_cast<Recorder*>(task->arg);
+	recorder->recordFunc();
+}, 8192, this){
 
 	i2sBuffer = static_cast<char*>(malloc(i2sBufferSize));
 	wavBuffer = static_cast<int16_t*>(malloc(wavBufferSize));
-	recCounter = 0;
-
-	cursor = wavHeaderSize;
-	wavTotalWritten = 0;
-	recCounter = 0;
-
-	i2s.init();
-
-	task.start(0, 0);
 }
 
-void Recorder::recordingTask(){
-	while(task.running){
-		if(!recording || done){
-			task.stop(true);
-			break;
-		}
+Recorder::~Recorder(){
+	free(i2sBuffer);
+	free(wavBuffer);
+}
 
-		if(recCounter >= numReadings){
-			stop();
-			break;
-		}
+void Recorder::start(){
+	if(state != WAITING) return;
+	state = RECORDING;
+
+	i2s.init();
+	task.start(1, 0);
+}
+
+void Recorder::recordFunc(){
+	while(task.running){
+		if(state != RECORDING) return;
 
 		size_t readSize;
 		i2s_read(I2S_NUM_0, i2sBuffer, i2sBufferSize, &readSize, portMAX_DELAY);
@@ -91,62 +79,67 @@ void Recorder::recordingTask(){
 		for(int j = 0; j < i2sBufferSize; j += 4){
 			int16_t sample = *(int16_t*)(&i2sBuffer[j + 2]) + 3705;
 
-			wavBuffer[j / 4] = sample;
-		}
-		memcpy(buf + cursor, wavBuffer, wavBufferSize);
-		cursor += wavBufferSize;
-		wavTotalWritten += wavBufferSize;
+			wavBuffer[sampleCount + j / 4] = sample;
+			sampleCount++;
 
-		recCounter++;
+			if(sampleCount >= maxSamples) break;
+		}
+
+		if(sampleCount >= maxSamples){
+			stop();
+			return;
+		}
 	}
 }
 
 void Recorder::stop(){
-	if(!recording || done) return;
+	if(state != RECORDING) return;
+	state = DONE;
 
-	task.stop();
-
-	writeHeaderWAV(wavTotalWritten);
-
-	free(i2sBuffer);
-	free(wavBuffer);
-
+	task.stop(true);
 	i2s.deinit();
-
-//	uint32_t timer = millis();
-	commit();
-//	timer = millis() - timer;
-//	Serial.printf("commit: %d\n", timer);
-//	delay(5);
-
-	done = true;
-	recording = false;
-}
-
-bool Recorder::isRecorded(){
-	return done;
-}
-
-bool Recorder::isRecording(){
-	return recording;
 }
 
 void Recorder::commit(){
-
 	SlotConfig conf;
 	conf.sample.sample = Sample::SampleType::RECORDING;
 	conf.sample.fileIndex = slot;
 	conf.slotIndex = slot;
 
-	File temp = openSample(conf, "w");
-	temp.write(buf, wavTotalWritten + wavHeaderSize);
+	File file = openSample(conf, "w");
+	ESP_LOGD(TAG, "Commiting to %s %ld samples", file.name(), sampleCount);
+	String filename(file.name());
+	file.close();
 
-	temp.close();
+	SPIFFS.remove(filename);
+	file = SPIFFS.open(filename, "w");
+
+	writeHeaderWAV(file, sampleCount * BYTES_PER_SAMPLE);
+
+	size_t totalWritten = 0;
+	const size_t bufSize = 4096;
+	uint8_t* buf = static_cast<uint8_t*>(malloc(bufSize));
+	while(totalWritten < sampleCount * BYTES_PER_SAMPLE){
+		size_t size = min(bufSize, sampleCount * BYTES_PER_SAMPLE - totalWritten);
+		totalWritten += file.write(reinterpret_cast<const uint8_t*>(wavBuffer) + totalWritten, size);
+	}
 	free(buf);
+
+	file.close();
+
+	ESP_LOGD(TAG, "Committing content: written %ld bytes", totalWritten);
 }
 
-void Recorder::writeHeaderWAV(size_t size){
-	Header header;
+bool Recorder::isRecording(){
+	return state == RECORDING;
+}
+
+bool Recorder::isRecorded(){
+	return state == DONE;
+}
+
+void Recorder::writeHeaderWAV(File& file, size_t size){
+	HeaderWAV header;
 	memcpy(header.RIFF, "RIFF", 4);
 	header.chunkSize = size + 36;
 	memcpy(header.WAVE, "WAVE", 4);
@@ -161,6 +154,8 @@ void Recorder::writeHeaderWAV(size_t size){
 	memcpy(header.data, "data", 4);
 	header.dataSize = size;
 
-	memcpy(buf, reinterpret_cast<uint8_t*>(&header), sizeof(Header));
+	file.seek(0);
+	size_t written = file.write(reinterpret_cast<const uint8_t*>(&header), sizeof(HeaderWAV));
+	ESP_LOGD(TAG, "Committing header: written %ld bytes", written);
 }
 
