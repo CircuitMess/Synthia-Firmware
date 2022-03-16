@@ -38,9 +38,9 @@ void VisualizerManager::begin(){
 }
 
 void VisualizerManager::pushing(VisualizerBase* vis){
-	if(vis != this->current){
+	if(vis != this->current && this->current != nullptr){
 		this->current->stop();
-		printf("Pushing new\n");
+//		printf("Pushing new\n");
 	}
 
 	this->current = vis;
@@ -52,9 +52,9 @@ void VisualizerManager::pushing(VisualizerBase* vis){
 void VisualizerManager::loop(uint32_t time){
 	if(pushTime == 0) return;
 	if(main == nullptr || current == main) return;
-	if(pushTime - millis() >= 2000){
+	if(millis() - pushTime >= mainRestartTimeout){
 		main->push();
-		printf("restaring main\n");
+//		printf("restaring main\n");
 	}
 }
 
