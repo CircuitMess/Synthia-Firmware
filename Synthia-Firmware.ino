@@ -7,6 +7,7 @@
 
 #include "src/AudioSystem/PlaybackSystem.h"
 #include "src/Services/SlotPlayer.h"
+#include "src/Visualization/Visualizer.h"
 
 void initLog(){
 	esp_log_level_set("*", ESP_LOG_NONE);
@@ -25,6 +26,7 @@ void setup(){
 
 	Playback.begin();
 	Player.begin();
+	VMan.begin();
 }
 
 void loop(){
