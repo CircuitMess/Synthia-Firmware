@@ -24,6 +24,14 @@ void VisualizerBase::push(){
 	visualize();
 }
 
+void VisualizerBase::onStart(){
+
+}
+
+void VisualizerBase::onStop(){
+
+}
+
 /** ### Manager ### */
 void VisualizerManager::begin(){
 	LoopManager::addListener(this);

@@ -59,8 +59,8 @@ protected:
 
 	virtual void visualize() = 0;
 
-	virtual void onStart() = 0;
-	virtual void onStop() = 0;
+	virtual void onStart();
+	virtual void onStop();
 
 private:
 	void* prop = nullptr;
