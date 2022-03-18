@@ -14,6 +14,8 @@ public:
 	void loop(uint32_t time) override;
 
 private:
+	const uint32_t mainRestartTimeout = 2000; // [ms]
+
 	VisualizerBase* main = nullptr;
 	VisualizerBase* current = nullptr;
 
