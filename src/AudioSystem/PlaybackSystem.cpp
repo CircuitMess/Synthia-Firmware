@@ -5,15 +5,6 @@
 
 PlaybackSystem Playback;
 
-const i2s_pin_config_t i2s_pin_config = {
-		.bck_io_num = 16,   // BCKL
-		.ws_io_num = 27,    // LRCL
-		.data_out_num = 4, // not used (only for speakers)
-		.data_in_num = 32
-};
-
-
-
 const i2s_config_t config = {
 		.mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_RX),
 		.sample_rate = SAMPLE_RATE,
