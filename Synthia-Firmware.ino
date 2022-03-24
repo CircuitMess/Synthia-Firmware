@@ -1,8 +1,13 @@
 #include <Arduino.h>
+#include <Synthia.h>
 #include <CircuitOS.h>
 #include <CMAudio.h>
-
+#include <Loop/LoopManager.h>
 #include <esp_log.h>
+
+#include "src/AudioSystem/PlaybackSystem.h"
+#include "src/Services/SlotPlayer.h"
+#include "src/Visualization/Visualizer.h"
 
 void initLog(){
 	esp_log_level_set("*", ESP_LOG_NONE);
@@ -59,12 +64,12 @@ uint8_t speed;
 
 void setup(){
 	Serial.begin(115200);
-//	Synthia.begin();
-	JayD.begin();
+	Synthia.begin();
 	initLog();
 
 	Playback.begin();
 	Player.begin();
+	VMan.begin();
 }
 
 void loop(){
