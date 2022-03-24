@@ -10,12 +10,12 @@
 
 class Recorder{
 public:
-	Recorder(uint8_t slot);
+	Recorder();
 	virtual ~Recorder();
 
 	void start();
 	void stop();
-	void commit(); //saves from RAM to SPIFFS
+	void commit(File& file); //saves from RAM to SPIFFS
 
 	bool isRecording();
 	bool isRecorded();
@@ -24,13 +24,11 @@ private:
 	void recordFunc();
 	static void writeHeaderWAV(File& file, size_t size);
 
-	uint8_t slot;
-
 	enum {
 		WAITING, RECORDING, DONE
 	} state = WAITING;
 
-	const float maxRecordTime = 2.0f; // in seconds
+	const float maxRecordTime = 1.0f; // in seconds
 	// i2s buffer: int16 stereo
 	// wav buffer: int16 mono
 	const size_t i2sBufferSize = BUFFER_SAMPLES * 4; // 2 channels * 2 bytes per sample
@@ -41,7 +39,6 @@ private:
 	char* i2sBuffer;
 	size_t sampleCount = 0;
 
-	OutputI2S i2s;
 	Task task;
 
 };
