@@ -16,5 +16,4 @@ void RGBTrackImpl::drawPixel(uint8_t slot, const MatrixPixel& color){
 void RGBTrackImpl::playSpecificAnim(){
 	//TODO - add animation path from SPIFFS
 	matrix.startAnimation(new MatrixAnimGIF(&matrix, File()));
-
 }

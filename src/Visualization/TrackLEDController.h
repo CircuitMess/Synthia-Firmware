@@ -15,6 +15,7 @@ public:
 	void blinkAll(MatrixPixel color);
 	void blinkTwice(uint8_t slot, MatrixPixel color);
 	void blinkAllTwice(MatrixPixel color);
+	void blinkContinuous(uint8_t slot, MatrixPixel color);
 	void playAnim();
 
 	void loop(uint micros) final;
@@ -32,7 +33,7 @@ private:
 	} state = Single;
 
 	enum {
-		Solid, Once, Twice
+		Solid, Once, Twice, Continuous
 	} slotState[5] = {Solid, Solid, Solid, Solid, Solid};
 
 	MatrixPixel slotColors[5] = {{0, 0, 0, 0},

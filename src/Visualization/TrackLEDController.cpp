@@ -61,6 +61,19 @@ void TrackLEDController::blinkAllTwice(MatrixPixel color){
 	}
 }
 
+void TrackLEDController::blinkContinuous(uint8_t slot, MatrixPixel color){
+	if(state == Anim){
+		matrix.stopAnimation();
+		state = Single;
+	}
+	drawPixel(slot, color);
+	matrix.push();
+	slotState[slot] = Continuous;
+	blinkMicros[slot] = 0;
+	blinkState[slot] = true;
+	blinkColors[slot] = color;
+}
+
 void TrackLEDController::loop(uint micros){
 	if(state == Anim) return;
 
@@ -74,6 +87,8 @@ void TrackLEDController::loop(uint micros){
 		if(blinkMicros[i] < blinkTime*1000) continue;
 
 		pushNeeded = true;
+		blinkMicros[i] = 0;
+
 		if(slotState[i] == Once){
 			if(blinkState[i]){
 				drawPixel(i, {0, 0, 0, 0});
@@ -89,6 +104,14 @@ void TrackLEDController::loop(uint micros){
 			}else{
 				blink(i, blinkColors[i]);
 			}
+		}else if(slotState[i] == Continuous){
+			if(blinkState[i]){
+				drawPixel(i, {0, 0, 0, 0});
+				blinkState[i] = false;
+			}else{
+				drawPixel(i, blinkColors[i]);
+				blinkState[i] = true;
+			}
 		}
 	}
 
@@ -101,4 +124,3 @@ void TrackLEDController::playAnim(){
 	state = Anim;
 	playSpecificAnim();
 }
-
