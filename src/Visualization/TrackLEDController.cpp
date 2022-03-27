@@ -13,6 +13,9 @@ void TrackLEDController::setColor(uint8_t slot, MatrixPixel color){
 		state = Single;
 		drawPixel(slot, color);
 		matrix.push();
+	}else if(state == Single){
+		drawPixel(slot, color);
+		pushNeeded = true;
 	}
 	//sets the resting color after a blink is done
 }
@@ -77,7 +80,7 @@ void TrackLEDController::blinkContinuous(uint8_t slot, MatrixPixel color){
 void TrackLEDController::loop(uint micros){
 	if(state == Anim) return;
 
-	bool pushNeeded = false;
+	bool blinkPushNeeded = false;
 
 	for(int i = 0; i < 5; ++i){
 
@@ -86,7 +89,7 @@ void TrackLEDController::loop(uint micros){
 		blinkMicros[i] += micros;
 		if(blinkMicros[i] < blinkTime*1000) continue;
 
-		pushNeeded = true;
+		blinkPushNeeded = true;
 		blinkMicros[i] = 0;
 
 		if(slotState[i] == Once){
@@ -115,8 +118,9 @@ void TrackLEDController::loop(uint micros){
 		}
 	}
 
-	if(pushNeeded){
+	if(blinkPushNeeded || pushNeeded){
 		matrix.push();
+		pushNeeded = false;
 	}
 }
 

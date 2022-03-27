@@ -2,6 +2,8 @@
 #include <Synthia.h>
 #include <Devices/Matrix/MatrixAnimGIF.h>
 
+RGBSlotImpl RGBSlot;
+
 RGBSlotImpl::RGBSlotImpl() : TrackLEDController(SlotRGB){
 
 }

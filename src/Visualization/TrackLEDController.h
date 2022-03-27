@@ -44,7 +44,9 @@ private:
 	MatrixPixel blinkColors[5];
 	uint32_t blinkMicros[5] = {0};
 	bool blinkState[5] = {false, false, false, false, false};
-	const uint32_t blinkTime = 350; //[ms]
+	const uint32_t blinkTime = 200; //[ms]
+
+	bool pushNeeded = false;
 };
 
 
