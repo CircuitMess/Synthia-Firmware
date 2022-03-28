@@ -1,8 +1,8 @@
 #include <Loop/LoopManager.h>
 #include "TempoAnim.h"
 
-TempoAnim::TempoAnim(Matrix* matrix) : MatrixAnim(matrix), width(16){
-
+TempoAnim::TempoAnim(Matrix* matrix) : MatrixAnim(matrix), width(12), steps(width*2 - 2){
+	setTempo(120);
 }
 
 void TempoAnim::loop(uint micros){
@@ -11,8 +11,8 @@ void TempoAnim::loop(uint micros){
 		return;
 	}
 
-	uint32_t currentStep = (int) floor((float) (millis() - startTime) / stepTime) % (width * 2);
-	if(step != currentStep){
+	uint32_t currentStep = (int) floor((float) (millis() - startTime) / stepTime) % steps;
+	if(currentStep != step){
 		step = currentStep;
 		pushPixel();
 	}
@@ -24,8 +24,8 @@ void TempoAnim::reset(){
 
 void TempoAnim::onStart(){
 	LoopManager::addListener(this);
-	pushPixel();
 	startTime = millis();
+	pushPixel();
 }
 
 void TempoAnim::onStop(){
@@ -33,20 +33,23 @@ void TempoAnim::onStop(){
 }
 
 void TempoAnim::setTempo(uint8_t tempo){
+	tempo = max((uint8_t) 1, tempo);
+
+	uint32_t currentStepTime = round((float) step * stepTime);
+	uint32_t currentLoopTime = (millis() - startTime) % (int) round((float) steps * stepTime);
+	uint32_t diff = currentLoopTime - currentStepTime;
+
 	this->tempo = tempo;
-
 	float beatTime = 60000.0f / (float) tempo;
-	stepTime = beatTime / (float) (width * 2);
+	stepTime = beatTime / (float) steps;
 
-	if(isStarted()){
-		startTime = millis() - (float) step * stepTime;
-	}
+	startTime = round((float) millis() - (float) step * stepTime - (float) diff);
 }
 
 void TempoAnim::pushPixel(){
 	Matrix* matrix = getMatrix();
 	matrix->clear();
-	matrix->drawPixel(step < width ? step : (width*2) - step - 1, { 255, 255, 255, 255 });
+	matrix->drawPixel(step < width ? step : steps - step, { 255, 255, 255, 255 });
 	matrix->push();
 }
 
