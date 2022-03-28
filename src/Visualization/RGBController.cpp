@@ -1,83 +1,91 @@
-#include "TrackLEDController.h"
-#include <Devices/Matrix/MatrixAnimGIF.h>
+#include "RGBController.h"
 #include <Devices/Matrix/Matrix.h>
+#include <Loop/LoopManager.h>
 
-TrackLEDController::TrackLEDController(Matrix& matrix) : matrix(matrix){
+RGBController RGBTrack;
+RGBController RGBSlot;
+
+RGBController::RGBController(){
 
 }
 
-void TrackLEDController::setColor(uint8_t slot, MatrixPixel color){
+void RGBController::begin(Matrix* matrix){
+	this->matrix = matrix;
+	LoopManager::addListener(this);
+}
+
+void RGBController::setColor(uint8_t slot, MatrixPixel color){
 	slotColors[slot] = color;
 	if(state == Anim){
-		matrix.stopAnimation();
+		matrix->stopAnimation();
 		state = Single;
-		drawPixel(slot, color);
-		matrix.push();
+		matrix->drawPixel(slot, color);
+		matrix->push();
 	}else if(state == Single){
-		drawPixel(slot, color);
+		matrix->drawPixel(slot, color);
 		pushNeeded = true;
 	}
 	//sets the resting color after a blink is done
 }
 
-void TrackLEDController::clear(){
+void RGBController::clear(){
 	for(int i = 0; i < 5; ++i){
 		setColor(i, {0, 0, 0, 0});
 	}
 }
 
-void TrackLEDController::blink(uint8_t slot, MatrixPixel color){
+void RGBController::blink(uint8_t slot, MatrixPixel color){
 	if(state == Anim){
-		matrix.stopAnimation();
+		matrix->stopAnimation();
 		state = Single;
 	}
-	drawPixel(slot, color);
-	matrix.push();
+	matrix->drawPixel(slot, color);
+	matrix->push();
 	slotState[slot] = Once;
 	blinkMicros[slot] = 0;
 	blinkState[slot] = true;
 	blinkColors[slot] = color;
 }
 
-void TrackLEDController::blinkTwice(uint8_t slot, MatrixPixel color){
+void RGBController::blinkTwice(uint8_t slot, MatrixPixel color){
 	if(state == Anim){
-		matrix.stopAnimation();
+		matrix->stopAnimation();
 		state = Single;
 	}
-	drawPixel(slot, color);
-	matrix.push();
+	matrix->drawPixel(slot, color);
+	matrix->push();
 	slotState[slot] = Twice;
 	blinkMicros[slot] = 0;
 	blinkState[slot] = true;
 	blinkColors[slot] = color;
 }
 
-void TrackLEDController::blinkAll(MatrixPixel color){
+void RGBController::blinkAll(MatrixPixel color){
 	for(int i = 0; i < 5; ++i){
 		blink(i, color);
 	}
 }
 
-void TrackLEDController::blinkAllTwice(MatrixPixel color){
+void RGBController::blinkAllTwice(MatrixPixel color){
 	for(int i = 0; i < 5; ++i){
 		blinkTwice(i, color);
 	}
 }
 
-void TrackLEDController::blinkContinuous(uint8_t slot, MatrixPixel color){
+void RGBController::blinkContinuous(uint8_t slot, MatrixPixel color){
 	if(state == Anim){
-		matrix.stopAnimation();
+		matrix->stopAnimation();
 		state = Single;
 	}
-	drawPixel(slot, color);
-	matrix.push();
+	matrix->drawPixel(slot, color);
+	matrix->push();
 	slotState[slot] = Continuous;
 	blinkMicros[slot] = 0;
 	blinkState[slot] = true;
 	blinkColors[slot] = color;
 }
 
-void TrackLEDController::loop(uint micros){
+void RGBController::loop(uint micros){
 	if(state == Anim) return;
 
 	bool blinkPushNeeded = false;
@@ -94,37 +102,37 @@ void TrackLEDController::loop(uint micros){
 
 		if(slotState[i] == Once){
 			if(blinkState[i]){
-				drawPixel(i, {0, 0, 0, 0});
+				matrix->drawPixel(i, {0, 0, 0, 0});
 				blinkState[i] = false;
 			}else{
 				slotState[i] = Solid;
-				drawPixel(i, slotColors[i]);
+				matrix->drawPixel(i, slotColors[i]);
 			}
 		}else if(slotState[i] == Twice){
 			if(blinkState[i]){
-				drawPixel(i, {0, 0, 0, 0});
+				matrix->drawPixel(i, {0, 0, 0, 0});
 				blinkState[i] = false;
 			}else{
 				blink(i, blinkColors[i]);
 			}
 		}else if(slotState[i] == Continuous){
 			if(blinkState[i]){
-				drawPixel(i, {0, 0, 0, 0});
+				matrix->drawPixel(i, {0, 0, 0, 0});
 				blinkState[i] = false;
 			}else{
-				drawPixel(i, blinkColors[i]);
+				matrix->drawPixel(i, blinkColors[i]);
 				blinkState[i] = true;
 			}
 		}
 	}
 
 	if(blinkPushNeeded || pushNeeded){
-		matrix.push();
+		matrix->push();
 		pushNeeded = false;
 	}
 }
 
-void TrackLEDController::playAnim(){
+void RGBController::playAnim(){
 	state = Anim;
-	playSpecificAnim();
+	// TODO: start GIF animation
 }

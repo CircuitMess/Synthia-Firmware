@@ -27,6 +27,8 @@ void setup(){
 	Playback.begin();
 	Player.begin();
 	VMan.begin();
+
+	// TODO: begin RGBTrack and RGBSlot with respective Matrix objects
 }
 
 void loop(){

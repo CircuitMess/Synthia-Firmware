@@ -1,14 +1,16 @@
-#ifndef SYNTHIA_FIRMWARE_TRACKLEDCONTROLLER_H
-#define SYNTHIA_FIRMWARE_TRACKLEDCONTROLLER_H
+#ifndef SYNTHIA_FIRMWARE_RGBCONTROLLER_H
+#define SYNTHIA_FIRMWARE_RGBCONTROLLER_H
 
 #include <Loop/LoopListener.h>
 #include <Devices/Matrix/MatrixPixel.h>
 
 class Matrix;
 
-class TrackLEDController : public LoopListener {
+class RGBController : public LoopListener {
 public:
-	TrackLEDController(Matrix& matrix);
+	RGBController();
+	void begin(Matrix* matrix);
+
 	void setColor(uint8_t slot, MatrixPixel color);
 	void clear();
 	void blink(uint8_t slot, MatrixPixel color);
@@ -20,13 +22,8 @@ public:
 
 	void loop(uint micros) final;
 
-protected:
-	virtual void drawPixel(uint8_t slot, const MatrixPixel& color) = 0;
-	virtual void playSpecificAnim() = 0;
-
-	Matrix& matrix;
-
 private:
+	Matrix* matrix = nullptr;
 
 	enum {
 		Single, Anim
@@ -49,5 +46,7 @@ private:
 	bool pushNeeded = false;
 };
 
+extern RGBController RGBTrack;
+extern RGBController RGBSlot;
 
-#endif //SYNTHIA_FIRMWARE_TRACKLEDCONTROLLER_H
+#endif //SYNTHIA_FIRMWARE_RGBCONTROLLER_H

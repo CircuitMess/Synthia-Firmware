@@ -37,8 +37,6 @@ void VisualizerBase::onStop(){
 /** ### Manager ### */
 void VisualizerManager::begin(){
 	LoopManager::addListener(this);
-	LoopManager::addListener(&RGBSlot);
-	LoopManager::addListener(&RGBTrack);
 }
 
 void VisualizerManager::pushing(VisualizerBase* vis){
