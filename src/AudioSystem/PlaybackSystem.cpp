@@ -6,10 +6,10 @@
 PlaybackSystem Playback;
 
 const i2s_config_t config = {
-		.mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX),
+		.mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_RX),
 		.sample_rate = SAMPLE_RATE,
 		.bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
-		.channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
+		.channel_format = I2S_CHANNEL_FMT_ONLY_RIGHT,
 		.communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
 		.intr_alloc_flags = 0,
 		.dma_buf_count = 2,
@@ -44,21 +44,25 @@ void PlaybackSystem::begin(){
 }
 
 void PlaybackSystem::block(uint8_t slot){
-	jobs.send(new AudioJob{AudioJob::SET, slot, nullptr});
+	AudioJob job { AudioJob::SET, slot, nullptr };
+	jobs.send(&job);
 }
 
 void PlaybackSystem::play(uint8_t slot){
-	jobs.send(new AudioJob{AudioJob::PLAY, slot, nullptr});
+	AudioJob job { AudioJob::PLAY, slot, nullptr };
+	jobs.send(&job);
 }
 
 void PlaybackSystem::set(uint8_t slot, File file){
-	auto temp = new PlaybackSlot(std::move(file));
-	jobs.send(new AudioJob{AudioJob::SET, slot, temp});
+	auto temp = new PlaybackSlot(file);
+	AudioJob job { AudioJob::SET, slot, temp };
+	jobs.send(&job);
 }
 
 EditSlot* PlaybackSystem::edit(uint8_t slot, const SlotConfig& config){
 	auto temp = new EditSlot(config);
-	jobs.send(new AudioJob{AudioJob::SET, slot, temp});
+	AudioJob job { AudioJob::SET, slot, temp };
+	jobs.send(&job);
 	return temp;
 }
 
