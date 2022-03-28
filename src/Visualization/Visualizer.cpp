@@ -1,5 +1,7 @@
 #include <Loop/LoopManager.h>
 #include "Visualizer.h"
+#include "RGBSlot.h"
+#include "RGBTrack.h"
 
 VisualizerManager VMan;
 
