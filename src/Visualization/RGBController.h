@@ -11,7 +11,7 @@ public:
 	RGBController();
 	void begin(Matrix* matrix);
 
-	void setColor(uint8_t slot, MatrixPixel color);
+	void setColor(uint8_t slot, MatrixPixel color = { 0, 0, 0, 0 });
 	void clear();
 	void blink(uint8_t slot, MatrixPixel color);
 	void blinkAll(MatrixPixel color);

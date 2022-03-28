@@ -22,6 +22,9 @@ void RGBController::setColor(uint8_t slot, MatrixPixel color){
 		matrix->drawPixel(slot, color);
 		matrix->push();
 	}else if(state == Single){
+		if(slotState[slot] == Continuous){
+			slotState[slot] = Solid;
+		}
 		matrix->drawPixel(slot, color);
 		pushNeeded = true;
 	}
