@@ -2,6 +2,7 @@
 #include "SlotPlayer.h"
 #include "../AudioSystem/PlaybackSystem.h"
 #include <Synthia.h>
+#include "../Visualization/RGBController.h"
 
 SlotPlayer Player;
 
@@ -41,10 +42,10 @@ void SlotPlayer::disable(){
 
 void SlotPlayer::play(uint8_t slot){
 	Playback.play(slot);
-	//TODO - add RGBSlot blue blink
+	RGBSlot.blink(slot, {0, 0, 255, 255});
 }
 
 void SlotPlayer::playOnInput(uint8_t slot){
 	Playback.play(slot);
-	//TODO - add RGBSlot green blink
+	RGBSlot.blink(slot, {0, 255, 0, 255});
 }
