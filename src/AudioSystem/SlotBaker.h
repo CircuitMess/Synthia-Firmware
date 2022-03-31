@@ -7,14 +7,14 @@
 
 class SlotBaker {
 public:
-	SlotBaker(EditSlot* slot, File output);
+	SlotBaker(EditSlot* slot, File& output);
 
 	void start();
 	bool isDone();
 
 private:
 	EditSlot* slot;
-	File outFile;
+	File& outFile;
 
 	OutputAAC output;
 
