@@ -8,6 +8,7 @@
 #include "src/AudioSystem/PlaybackSystem.h"
 #include "src/Services/SlotPlayer.h"
 #include "src/Visualization/Visualizer.h"
+#include "src/Visualization/RGBController.h"
 
 void initLog(){
 	esp_log_level_set("*", ESP_LOG_NONE);
@@ -28,7 +29,8 @@ void setup(){
 	Player.begin();
 	VMan.begin();
 
-	// TODO: begin RGBTrack and RGBSlot with respective Matrix objects
+	RGBTrack.begin(&Synthia.TrackRGB);
+	RGBSlot.begin(&Synthia.SlotRGB);
 }
 
 void loop(){
