@@ -83,7 +83,7 @@ public:
 
 protected:
 	const T& getProp(){
-		return VisualizerBase::getProp();
+		return VisualizerBase::getProp<T>();
 	}
 
 };
