@@ -8,7 +8,10 @@ class TrackEditState : public State {
 public:
 	void setTrack(Track track);
 	Track& getTrack();
-
+protected:
+	void onStart() override;
+	void onStop() override;
+	Track track;
 };
 
 

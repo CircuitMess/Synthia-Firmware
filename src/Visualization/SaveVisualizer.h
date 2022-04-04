@@ -2,11 +2,12 @@
 #define SYNTHIA_FIRMWARE_SAVEVISUALIZER_H
 #include "Visualizer.h"
 
+enum SaveStep{
+	SlotSelect, ActionSelect, Confirmation
+};
 
 struct SaveVisData {
-	enum {
-		SlotSelect, ActionSelect, Confirmation
-	} state;
+	SaveStep state;
 	uint8_t selection;
 };
 
