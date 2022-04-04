@@ -1,7 +1,9 @@
 #include <Loop/LoopManager.h>
 #include "TempoAnim.h"
 
-TempoAnim::TempoAnim(Matrix* matrix) : MatrixAnim(matrix), width(12), steps(width*2 - 2){
+TempoAnim::TempoAnim(Matrix* matrix) : MatrixAnim(matrix){
+	setWidth(12);
+	steps = getWidth()*2 - 2;
 	setTempo(120);
 }
 
@@ -47,10 +49,9 @@ void TempoAnim::setTempo(uint8_t tempo){
 }
 
 void TempoAnim::pushPixel(){
-	Matrix* matrix = getMatrix();
-	matrix->clear();
-	matrix->drawPixel(step < width ? step : steps - step, { 255, 255, 255, 255 });
-	matrix->push();
+	clear();
+	drawPixel(step < getWidth() ? step : steps - step, { 255, 255, 255, 255 });
+	push();
 }
 
 uint8_t TempoAnim::getTempo() const{

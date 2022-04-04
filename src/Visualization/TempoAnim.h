@@ -22,8 +22,7 @@ protected:
 	void onStop() override;
 
 private:
-	const uint8_t width;
-	const uint16_t steps;
+	uint16_t steps;
 
 	uint8_t tempo;
 	float stepTime;
