@@ -3,20 +3,19 @@
 
 #include "EditSlot.h"
 #include <Util/Task.h>
-#include <Audio/OutputAAC.h>
+#include <Audio/OutputWAV.h>
 
 class SlotBaker {
 public:
-	SlotBaker(EditSlot* slot, File& output);
+	SlotBaker(EditSlot* slot, File output);
 
 	void start();
 	bool isDone();
 
 private:
 	EditSlot* slot;
-	File& outFile;
 
-	OutputAAC output;
+	OutputWAV output;
 
 	Task task;
 	enum { WAITING, WORKING, DONE } state = WAITING;
