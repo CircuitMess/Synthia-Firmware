@@ -10,7 +10,7 @@ struct SlotConfig {
 			{EffectData::Type::HIGHPASS, 0},
 			{EffectData::Type::REVERB, 0},
 			{EffectData::Type::BITCRUSHER, 0},
-			{EffectData::Type::VOLUME, 0}
+			{EffectData::Type::VOLUME, 255}
 	};
 	Sample sample;
 	uint8_t slotIndex = 0;

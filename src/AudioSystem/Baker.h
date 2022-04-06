@@ -6,6 +6,7 @@
 #include <Util/Task.h>
 
 class SlotBaker;
+class EditSlot;
 
 class Baker {
 public:
@@ -15,8 +16,10 @@ public:
 
 private:
 	std::array<SlotConfig, 5>& configs;
-	std::array<SlotBaker*, 5> slotBakers;
-	std::array<File, 5> slotFiles;
+	SlotBaker* slotBakers[5];
+	File slotFiles[5];
+	EditSlot* editSlots[5];
+
 	Task task;
 
 	enum {
