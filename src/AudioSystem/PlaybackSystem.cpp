@@ -27,7 +27,9 @@ PlaybackSystem::PlaybackSystem() : output(config, i2s_pin_config, I2S_NUM_0), jo
 
 void PlaybackSystem::begin(){
 	if(task.running) return;
-	setVolume(volume);
+
+	setVolume(Sliders.getRightPotValue());
+
 	//TODO - create EditSlots with config from SaveManager, bake, init PlaybackSlots with RamFile from baking
 	for(int i = 0; i < 5; ++i){
 		SlotConfig conf;

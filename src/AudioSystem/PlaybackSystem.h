@@ -34,7 +34,7 @@ private:
 	Mixer mixer;
 	OutputI2S output;
 	SampleSlot* slots[5];
-	uint8_t volume = 100;
+	uint8_t volume = 0;
 
 	Task task;
 	Queue jobs;
