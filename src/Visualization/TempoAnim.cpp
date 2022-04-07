@@ -49,10 +49,9 @@ void TempoAnim::setTempo(uint8_t tempo){
 }
 
 void TempoAnim::pushPixel(){
-	Matrix* matrix = getMatrix();
-	matrix->clear();
-	matrix->drawPixel(step < width ? step : steps - step, { 255, 255, 255, 255 });
-	matrix->push();
+	clear();
+	drawPixel(step < getWidth() ? step : steps - step, { 255, 255, 255, 255 });
+	push();
 }
 
 uint8_t TempoAnim::getTempo() const{
