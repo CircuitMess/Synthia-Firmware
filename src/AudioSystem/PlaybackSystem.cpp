@@ -61,6 +61,7 @@ void PlaybackSystem::set(uint8_t slot, File file){
 
 EditSlot* PlaybackSystem::edit(uint8_t slot, const SlotConfig& config){
 	auto temp = new EditSlot(config);
+	configs[slot] = config;
 	AudioJob job { AudioJob::SET, slot, temp };
 	jobs.send(&job);
 	return temp;
@@ -93,4 +94,8 @@ void PlaybackSystem::processJob(AudioJob &job){
 			slots[job.slot] = job.sampleSlot;
 			break;
 	}
+}
+
+const SlotConfig& PlaybackSystem::getConfig(uint8_t slot){
+	return configs[slot];
 }
