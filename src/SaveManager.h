@@ -6,13 +6,16 @@
 
 class SaveManager {
 public:
-	SaveData load(uint8_t trackSlot);
-	void store(uint8_t trackSlot, SaveData config);
+	SaveData load(uint8_t trackSlot, bool saveLastEdited = true);
+	void store(uint8_t trackSlot, SaveData config,  bool saveLastEdited = true);
+	SaveData loadLast();
 
 private:
 	void copyFile(File& source, File& destination);
 	void clearFolder(File& folder);
 	void copyFolder(File& source, File& destination);
+	void saveLast(uint8_t trackSlot);
+	uint8_t getLast();
 };
 
 extern SaveManager saveManager;

@@ -2,7 +2,7 @@
 
 SaveManager saveManager;
 
-SaveData SaveManager::load(uint8_t trackSlot){
+SaveData SaveManager::load(uint8_t trackSlot, bool saveLastEdited){
 	const String rootPath = "/Save/" + String(trackSlot) + "/";
 
 	//clean current Recordings folder
@@ -30,10 +30,15 @@ SaveData SaveManager::load(uint8_t trackSlot){
 
 	saveFolder.close();
 	recordings.close();
+
+	if(saveLastEdited){
+		saveLast(trackSlot);
+	}
+
 	return data;
 }
 
-void SaveManager::store(uint8_t trackSlot, SaveData data){
+void SaveManager::store(uint8_t trackSlot, SaveData data, bool saveLastEdited){
 	const String rootPath = "/Save/" + String(trackSlot) + "/";
 
 	File saveFolder = SPIFFS.open(rootPath);
@@ -47,7 +52,9 @@ void SaveManager::store(uint8_t trackSlot, SaveData data){
 	File recordings = SPIFFS.open("/Recordings/");
 	copyFolder(recordings, saveFolder);
 
-
+	if(saveLastEdited){
+		saveLast(trackSlot);
+	}
 }
 
 void SaveManager::copyFile(File& source, File& destination){
@@ -86,4 +93,25 @@ void SaveManager::copyFolder(File& source, File& destination){
 		file.close();
 		copy.close();
 	}
+}
+
+void SaveManager::saveLast(uint8_t trackSlot){
+	File lastData = SPIFFS.open("/Save/last.bin", "w");
+	lastData.write(trackSlot);
+	lastData.close();
+}
+
+uint8_t SaveManager::getLast(){
+	uint8_t data = 0;
+	File lastData = SPIFFS.open("/Save/last.bin");
+	if(lastData){
+		lastData.read(&data, 1);
+	}
+	lastData.close();
+
+	return data;
+}
+
+SaveData SaveManager::loadLast(){
+	return load(getLast(), false);
 }
