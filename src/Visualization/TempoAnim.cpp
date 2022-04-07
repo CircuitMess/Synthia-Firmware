@@ -1,7 +1,9 @@
 #include <Loop/LoopManager.h>
 #include "TempoAnim.h"
 
-TempoAnim::TempoAnim(Matrix* matrix) : MatrixAnim(matrix), width(16), steps(width*2 - 2){
+TempoAnim::TempoAnim(Matrix* matrix) : MatrixAnim(matrix){
+	setWidth(16);
+	steps = getWidth()*2 - 2;
 	setTempo(120);
 }
 

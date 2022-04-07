@@ -3,7 +3,7 @@
 
 #include "EditSlot.h"
 #include <Util/Task.h>
-#include <Audio/OutputAAC.h>
+#include <Audio/OutputWAV.h>
 
 class SlotBaker {
 public:
@@ -14,9 +14,8 @@ public:
 
 private:
 	EditSlot* slot;
-	File outFile;
 
-	OutputAAC output;
+	OutputWAV output;
 
 	Task task;
 	enum { WAITING, WORKING, DONE } state = WAITING;

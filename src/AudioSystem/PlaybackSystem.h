@@ -27,6 +27,7 @@ public:
 	EditSlot* edit(uint8_t slot, const SlotConfig& config);
 	void block(uint8_t slot);
 
+	const SlotConfig& getConfig(uint8_t slot);
 private:
 	Mixer mixer;
 	OutputI2S output;
@@ -38,6 +39,8 @@ private:
 	static void taskFunc(Task* task);
 
 	void processJob(AudioJob &job);
+
+	SlotConfig configs[5];
 };
 
 extern PlaybackSystem Playback;

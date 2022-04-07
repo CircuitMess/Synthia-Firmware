@@ -2,8 +2,8 @@
 #include <Audio/OutputWAV.h>
 #include <utility>
 
-SlotBaker::SlotBaker(EditSlot* slot, File outFile) : slot(slot), outFile(std::move(outFile)), output(outFile),
-													  task("SlotBaker", [](Task* task){ static_cast<SlotBaker*>(task->arg)->bake(); }, 8192, this){
+SlotBaker::SlotBaker(EditSlot* slot, File outFile) : slot(slot), output(outFile),
+													 task("SlotBaker", [](Task* task){ static_cast<SlotBaker*>(task->arg)->bake(); }, 8192, this){
 	output.setSource(&slot->getGenerator());
 }
 
