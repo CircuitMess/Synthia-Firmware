@@ -12,6 +12,7 @@ friend VisualizerBase;
 public:
 	void begin();
 	void loop(uint32_t time) override;
+	void clearMain();
 
 private:
 	const uint32_t mainRestartTimeout = 2000; // [ms]
