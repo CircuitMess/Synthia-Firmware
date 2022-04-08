@@ -2,14 +2,17 @@
 #define SYNTHIA_FIRMWARE_TEMPOVISUALIZER_H
 
 #include "Visualizer.h"
-
-class TempoAnim;
+#include "TempoAnim.h"
 
 class TempoVisualizer : public Visualizer<uint8_t> {
+public:
+	TempoVisualizer();
+
 protected:
 	void visualize() override;
+
 private:
-	static TempoAnim* anim;
+	TempoAnim anim;
 };
 
 

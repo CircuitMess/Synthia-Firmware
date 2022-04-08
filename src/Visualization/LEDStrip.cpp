@@ -12,7 +12,7 @@ void LEDStripImpl::setRight(uint8_t value){
 }
 
 void LEDStripImpl::setMidFill(uint8_t value){
-	Synthia.CursorMatrix.stopAnimation();
+	Synthia.CursorMatrix.stopAnimations();
 	uint32_t fill = map(value, 0, 255, 0, 255 * 16);
 	for(int i = 0; i < 16; ++i){
 		uint8_t pixelValue = min(fill, 255U);
@@ -27,14 +27,14 @@ void LEDStripImpl::setMidFill(uint8_t value){
 }
 
 void LEDStripImpl::setMidSingle(uint8_t index){
-	Synthia.CursorMatrix.stopAnimation();
+	Synthia.CursorMatrix.stopAnimations();
 	Synthia.CursorMatrix.clear();
 	Synthia.CursorMatrix.drawPixel(index, {255, 255, 255, 255});
 	Synthia.CursorMatrix.push();
 }
 
 void LEDStripImpl::setMidSelection(uint8_t value){
-	Synthia.CursorMatrix.stopAnimation();
+	Synthia.CursorMatrix.stopAnimations();
 	if(value > 1) return;
 	Synthia.CursorMatrix.clear();
 
@@ -45,7 +45,6 @@ void LEDStripImpl::setMidSelection(uint8_t value){
 }
 
 void LEDStripImpl::setStrip(uint8_t value, uint8_t x){
-	Synthia.CursorMatrix.stopAnimation();
 	uint32_t fill = map(value, 0, 255, 0, 255 * 8);
 	for(int i = 7; i >= 0; --i){
 		uint8_t pixelValue = min(fill, 255U);
