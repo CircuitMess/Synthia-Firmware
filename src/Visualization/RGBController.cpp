@@ -17,7 +17,7 @@ void RGBController::begin(Matrix* matrix){
 void RGBController::setColor(uint8_t slot, MatrixPixel color){
 	slotColors[slot] = color;
 	if(state == Anim){
-		matrix->stopAnimation();
+		matrix->stopAnimations();
 		state = Single;
 		matrix->drawPixel(slot, color);
 		matrix->push();
@@ -39,7 +39,7 @@ void RGBController::clear(){
 
 void RGBController::blink(uint8_t slot, MatrixPixel color){
 	if(state == Anim){
-		matrix->stopAnimation();
+		matrix->stopAnimations();
 		state = Single;
 	}
 	matrix->drawPixel(slot, color);
@@ -52,7 +52,7 @@ void RGBController::blink(uint8_t slot, MatrixPixel color){
 
 void RGBController::blinkTwice(uint8_t slot, MatrixPixel color){
 	if(state == Anim){
-		matrix->stopAnimation();
+		matrix->stopAnimations();
 		state = Single;
 	}
 	matrix->drawPixel(slot, color);
@@ -77,7 +77,7 @@ void RGBController::blinkAllTwice(MatrixPixel color){
 
 void RGBController::blinkContinuous(uint8_t slot, MatrixPixel color){
 	if(state == Anim){
-		matrix->stopAnimation();
+		matrix->stopAnimations();
 		state = Single;
 	}
 	matrix->drawPixel(slot, color);
