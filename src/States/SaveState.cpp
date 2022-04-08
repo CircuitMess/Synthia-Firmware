@@ -33,7 +33,7 @@ void SaveState::onStart(){
 }
 
 void SaveState::onStop(){
-	Synthia.TrackMatrix.stopAnimation();
+	Synthia.TrackMatrix.stopAnimations();
 	Synthia.TrackMatrix.clear();
 	Synthia.TrackMatrix.push();
 	Synthia.CursorMatrix.clear();

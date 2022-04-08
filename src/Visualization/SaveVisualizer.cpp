@@ -16,16 +16,16 @@ void SaveVisualizer::visualize(){
 					matrix.drawPixel(x, y, {0, 0, 0, 0});
 				}
 			}
-			matrix.startAnimation(new MatrixAnimGIF(&matrix, SPIFFS.open("/test.gif")));
+			matrix.startAnimation(new MatrixAnimGIF(SPIFFS.open("/test.gif")));
 			matrix.setFont(Matrix::SMALL);
 			matrix.drawString(13, 5, String(data.selection));
 			matrix.push();
 			break;
 
 		case ActionSelect:{
-			matrix.stopAnimation();
+			matrix.stopAnimations();
 			matrix.clear();
-			auto anim = new MatrixAnimGIF(&matrix, SPIFFS.open("/test.gif"));
+			auto anim = new MatrixAnimGIF(SPIFFS.open("/test.gif"));
 			anim->setX(data.selection ?  9 : 1);
 			matrix.startAnimation(anim);
 			//TODO - add save bitmap on left, load bitmap on right, selection is drawn inverted
@@ -34,9 +34,9 @@ void SaveVisualizer::visualize(){
 		}
 
 		case Confirmation:
-			matrix.stopAnimation();
+			matrix.stopAnimations();
 			matrix.clear();
-			auto anim = new MatrixAnimGIF(&matrix, SPIFFS.open("/test.gif"));
+			auto anim = new MatrixAnimGIF(SPIFFS.open("/test.gif"));
 			anim->setX(data.selection ?  9 : 1);
 			matrix.startAnimation(anim);
 			//TODO - add NO bitmap on left, YES bitmap on right, selection is drawn inverted
