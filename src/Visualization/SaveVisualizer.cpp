@@ -1,8 +1,9 @@
 #include "SaveVisualizer.h"
 #include <Synthia.h>
 #include "LEDStrip.h"
-#include <Devices/Matrix/MatrixAnimGIF.h>
 #include <SPIFFS.h>
+
+SaveVisualizer::SaveVisualizer() : slotAnim(SPIFFS.open("/test.gif")){}
 
 void SaveVisualizer::visualize(){
 	auto data = getProp();
@@ -10,24 +11,24 @@ void SaveVisualizer::visualize(){
 
 	switch(data.state){
 		case SlotSelect:
-			//iterate by x and y to clear pixels from (13, 0) to (16, 5)
 			for(int x = 13; x < matrix.getWidth(); x++){
 				for(int y = 0; y < matrix.getHeight(); y++){
 					matrix.drawPixel(x, y, {0, 0, 0, 0});
 				}
 			}
-			matrix.startAnimation(new MatrixAnimGIF(SPIFFS.open("/test.gif")));
 			matrix.setFont(Matrix::SMALL);
 			matrix.drawString(13, 5, String(data.selection));
 			matrix.push();
+
+			if(!slotAnim.isStarted()){
+				slotAnim.start();
+			}
 			break;
 
 		case ActionSelect:{
 			matrix.stopAnimations();
 			matrix.clear();
-			auto anim = new MatrixAnimGIF(SPIFFS.open("/test.gif"));
-			anim->setX(data.selection ?  9 : 1);
-			matrix.startAnimation(anim);
+
 			//TODO - add save bitmap on left, load bitmap on right, selection is drawn inverted
 			LEDStrip.setMidSelection(data.selection);
 			break;
@@ -36,9 +37,7 @@ void SaveVisualizer::visualize(){
 		case Confirmation:
 			matrix.stopAnimations();
 			matrix.clear();
-			auto anim = new MatrixAnimGIF(SPIFFS.open("/test.gif"));
-			anim->setX(data.selection ?  9 : 1);
-			matrix.startAnimation(anim);
+
 			//TODO - add NO bitmap on left, YES bitmap on right, selection is drawn inverted
 			LEDStrip.setMidSelection(data.selection);
 			break;
