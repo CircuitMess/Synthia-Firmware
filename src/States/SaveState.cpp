@@ -23,13 +23,21 @@ void SaveState::loop(uint micros){
 
 void SaveState::onStart(){
 	step = SlotSelect;
-	visualizer.push({step, currentSaveSlot});
 	selection = currentSaveSlot;
+	inactiveTimer = 0;
+
+	Synthia.CursorMatrix.stopAnimations();
+	Synthia.CursorMatrix.clear();
+	Synthia.CursorMatrix.push();
+
+	Synthia.TrackMatrix.stopAnimations();
+	Synthia.TrackMatrix.clear();
+	visualizer.push({step, currentSaveSlot});
+
 	Encoders.addListener(this);
 	Sliders.addListener(this);
 	Input::getInstance()->addListener(this);
 	LoopManager::addListener(this);
-	inactiveTimer = 0;
 }
 
 void SaveState::onStop(){
@@ -76,7 +84,7 @@ void SaveState::load(){
 	pop();
 }
 
-void SaveState::rightEncMove(int8_t amount){
+void SaveState::leftEncMove(int8_t amount){
 	inactiveTimer = 0;
 	if(step == SlotSelect){
 		if((amount < 0 && selection == 0) || (amount > 0 && selection == 9)) return;
@@ -90,39 +98,40 @@ void SaveState::rightEncMove(int8_t amount){
 }
 
 void SaveState::buttonPressed(uint i){
-	if(i == BTN_ENC_R){
-		inactiveTimer = 0;
-		switch(step){
-			case SlotSelect:
-				step = ActionSelect;
-				selectedSlot = selection;
-				selection = 0;
-				Synthia.TrackMatrix.clear();
-				visualizer.push({step, selection});
-				break;
-
-			case ActionSelect:
-				step = Confirmation;
-				selectedAction = (selection ? Save : Load);
-				selection = 0;
-				visualizer.push({step, selection});
-				break;
-
-			case Confirmation:
-				if(selection){
-					selectedAction ? save() : load();
-				}else{
-					pop();
-				}
-				break;
-		}
-	}else{
+	if(i != BTN_ENC_L){
 		pop(); //exits on any other inputs
+		return;
+	}
+
+	inactiveTimer = 0;
+	switch(step){
+		case SlotSelect:
+			step = ActionSelect;
+			selectedSlot = selection;
+			selection = 0;
+			Synthia.TrackMatrix.clear();
+			visualizer.push({ step, selection });
+			break;
+
+		case ActionSelect:
+			step = Confirmation;
+			selectedAction = (selection ? Save : Load);
+			selection = 0;
+			visualizer.push({ step, selection });
+			break;
+
+		case Confirmation:
+			if(selection){
+				selectedAction ? save() : load();
+			}else{
+				pop();
+			}
+			break;
 	}
 }
 
-void SaveState::leftEncMove(int8_t amount){
-	ESP_LOGI("SaveState", "pop L enc : %d", amount);
+void SaveState::rightEncMove(int8_t amount){
+	ESP_LOGI("SaveState", "pop R enc : %d", amount);
 
 	pop();
 }
