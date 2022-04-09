@@ -19,7 +19,8 @@ public:
 
 protected:
 	void visualize() override;
-
+	void onStart() override;
+	void onStop() override;
 private:
 	MatrixAnimGIF slotAnim;
 };

@@ -26,12 +26,6 @@ void SaveState::onStart(){
 	selection = currentSaveSlot;
 	inactiveTimer = 0;
 
-	Synthia.CursorMatrix.stopAnimations();
-	Synthia.CursorMatrix.clear();
-	Synthia.CursorMatrix.push();
-
-	Synthia.TrackMatrix.stopAnimations();
-	Synthia.TrackMatrix.clear();
 	visualizer.push({step, currentSaveSlot});
 
 	Encoders.addListener(this);
@@ -41,12 +35,6 @@ void SaveState::onStart(){
 }
 
 void SaveState::onStop(){
-	Synthia.TrackMatrix.stopAnimations();
-	Synthia.TrackMatrix.clear();
-	Synthia.TrackMatrix.push();
-	Synthia.CursorMatrix.clear();
-	Synthia.CursorMatrix.push();
-
 	Encoders.removeListener(this);
 	Sliders.removeListener(this);
 	Input::getInstance()->removeListener(this);

@@ -43,3 +43,21 @@ void SaveVisualizer::visualize(){
 			break;
 	}
 }
+
+void SaveVisualizer::onStart(){
+	Synthia.CursorMatrix.stopAnimations();
+	Synthia.CursorMatrix.clear();
+	Synthia.CursorMatrix.push();
+
+	Synthia.TrackMatrix.stopAnimations();
+	Synthia.TrackMatrix.clear();
+}
+
+void SaveVisualizer::onStop(){
+	Synthia.TrackMatrix.stopAnimations();
+	Synthia.TrackMatrix.clear();
+	Synthia.TrackMatrix.push();
+
+	Synthia.CursorMatrix.clear();
+	Synthia.CursorMatrix.push();
+}
