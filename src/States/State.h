@@ -5,6 +5,7 @@
 class State {
 public:
 	State(State* parent = nullptr);
+	virtual ~State() = default;
 
 	void start();
 	void stop();
