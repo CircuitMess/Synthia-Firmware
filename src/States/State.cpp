@@ -26,4 +26,5 @@ void State::pop(){
 	if(parent == nullptr) return;
 	stop();
 	parent->start();
+	delete this;
 }
