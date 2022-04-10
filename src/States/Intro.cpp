@@ -33,10 +33,14 @@ void Intro::onStart(){
 	}
 
 	// TODO: first time data
-	SaveData data; // TODO: = saveManager.loadLast();
 
 	std::array<SlotConfig, 5> configs;
-	std::copy(std::begin(data.slots), std::end(data.slots), configs.begin());
+	for(int i = 0; i < 5; i++){
+		configs[i].sample.sample = (Sample::SampleType) i;
+		configs[i].slotIndex = i;
+	}
+	configs[4].sample.sample = Sample::SampleType::KICK;
+	configs[4].speed = 50;
 	baker = std::unique_ptr<Baker>(new Baker(configs));
 
 	baker->start();
