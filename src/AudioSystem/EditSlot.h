@@ -15,6 +15,7 @@ public:
 
 	void setEffect(EffectData::Type type, uint8_t intensity);
 	void setSpeed(uint8_t speed);
+	void setSample(const Sample& sample);
 
 	Generator& getGenerator() override;
 	SlotConfig getConfig();
