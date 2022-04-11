@@ -44,16 +44,22 @@ void PlaybackSystem::begin(){
 }
 
 void PlaybackSystem::block(uint8_t slot){
+	if(!task.running) return;
+
 	AudioJob job { AudioJob::SET, slot, nullptr };
 	jobs.send(&job);
 }
 
 void PlaybackSystem::play(uint8_t slot){
+	if(!task.running) return;
+
 	AudioJob job { AudioJob::PLAY, slot, nullptr };
 	jobs.send(&job);
 }
 
 void PlaybackSystem::set(uint8_t slot, File file, const SlotConfig& config){
+	if(!task.running) return;
+
 	auto temp = new PlaybackSlot(file);
 	configs[slot] = config;
 	AudioJob job { AudioJob::SET, slot, temp };
@@ -61,6 +67,8 @@ void PlaybackSystem::set(uint8_t slot, File file, const SlotConfig& config){
 }
 
 EditSlot* PlaybackSystem::edit(uint8_t slot){
+	if(!task.running) return nullptr;
+
 	auto temp = new EditSlot(configs[slot]);
 	AudioJob job { AudioJob::SET, slot, temp };
 	jobs.send(&job);
