@@ -2,7 +2,7 @@
 #include "PlaybackSystem.h"
 #include "SlotBaker.h"
 
-Baker::Baker(std::array<SlotConfig, 5>& configs) : configs(configs),
+Baker::Baker(const std::array<SlotConfig, 5>& configs) : configs(configs),
 												   task("SlotBaker", [](Task* task){static_cast<Baker*>(task->arg)->bake();}, 8192, this){
 
 

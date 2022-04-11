@@ -10,12 +10,12 @@ class EditSlot;
 
 class Baker {
 public:
-	Baker(std::array<SlotConfig, 5>& configs);
+	Baker(const std::array<SlotConfig, 5>& configs);
 	void start();
 	bool isDone();
 
 private:
-	std::array<SlotConfig, 5>& configs;
+	std::array<SlotConfig, 5> configs;
 	SlotBaker* slotBakers[5];
 	File slotFiles[5];
 	EditSlot* editSlots[5];
