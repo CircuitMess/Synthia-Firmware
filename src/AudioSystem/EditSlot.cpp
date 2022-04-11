@@ -4,6 +4,8 @@
 #include <Audio/Effects/Reverb.h>
 #include <Audio/Effects/BitCrusher.h>
 
+#include <utility>
+
 EditSlot::EditSlot(const SlotConfig& config, File file) : config(config), speeder(nullptr), effector(nullptr){
 
 	playback = new PlaybackSlot(std::move(file));
@@ -61,7 +63,7 @@ void EditSlot::setSample(const Sample& sample, File file){
 	config.sample = sample;
 	delete playback;
 
-	playback = new PlaybackSlot(file);
+	playback = new PlaybackSlot(std::move(file));
 	speeder.setSource(&playback->getSource());
 }
 
