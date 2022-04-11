@@ -67,7 +67,7 @@ void TrackEditState::leftEncMove(int8_t amount){
 }
 
 void TrackEditState::leftPotMove(uint8_t value){
-	track.tempo = map(value, 0, 255, 60, 255);
+	track.tempo = map(value, 0, 255, 60, 220);
 	tempoVis.push(track.tempo);
 }
 
