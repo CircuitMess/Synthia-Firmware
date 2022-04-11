@@ -18,8 +18,6 @@ void TrackEditState::onStart(){
 	setButtonHoldTime(BTN_ENC_R, 800);
 	setButtonHoldTime(BTN_ENC_L, 800);
 
-	cursor = 0;
-
 	LEDStrip.setLeft(track.tempo);
 	LEDStrip.setRight(Playback.getVolume());
 	pushTrackVis();
