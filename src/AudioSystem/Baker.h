@@ -27,6 +27,7 @@ private:
 	} state = WAITING;
 
 	void bake();
+	void prepareSamples();
 };
 
 

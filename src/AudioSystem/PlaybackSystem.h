@@ -24,7 +24,7 @@ public:
 	void play(uint8_t slot);
 
 	void set(uint8_t slot, File file, const SlotConfig& config);
-	EditSlot* edit(uint8_t slot);
+	void edit(uint8_t slot, EditSlot* editSlot);
 	void block(uint8_t slot);
 	uint8_t getVolume() const;
 	void setVolume(uint8_t volume);

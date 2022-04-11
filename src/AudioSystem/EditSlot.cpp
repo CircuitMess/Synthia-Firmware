@@ -4,11 +4,11 @@
 #include <Audio/Effects/Reverb.h>
 #include <Audio/Effects/BitCrusher.h>
 
-EditSlot::EditSlot(const SlotConfig& config) : config(config), speeder(nullptr), effector(nullptr){
+#include <utility>
 
-	File sampleFile = openSample(config);
-	playback = new PlaybackSlot(RamFile::open(sampleFile));
-	sampleFile.close();
+EditSlot::EditSlot(const SlotConfig& config, File file) : config(config), speeder(nullptr), effector(nullptr){
+
+	playback = new PlaybackSlot(std::move(file));
 
 	speeder.setSource(&playback->getSource());
 	effector.setSource(&speeder);
@@ -56,16 +56,14 @@ void EditSlot::setSpeed(uint8_t speed){
 	config.speed = speed;
 }
 
-void EditSlot::setSample(const Sample& sample){
+void EditSlot::setSample(const Sample& sample, File file){
 	//don't do anything if sample wasn't changed (except for recordings, which can be modified)
 	if(config.sample.sample == sample.sample && sample.sample != Sample::SampleType::RECORDING) return;
 
 	config.sample = sample;
-	File sampleFile = openSample(config);
 	delete playback;
 
-	playback = new PlaybackSlot(RamFile::open(sampleFile));
-	sampleFile.close();
+	playback = new PlaybackSlot(std::move(file));
 	speeder.setSource(&playback->getSource());
 }
 
