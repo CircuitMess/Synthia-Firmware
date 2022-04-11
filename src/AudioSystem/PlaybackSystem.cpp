@@ -22,23 +22,13 @@ const i2s_config_t i2s_config = {
 
 PlaybackSystem::PlaybackSystem() : output(i2s_config, i2s_pin_config, I2S_NUM_0), jobs(15, sizeof(AudioJob)), task("Playback", PlaybackSystem::taskFunc, 4096, this){
 	output.setSource(&mixer);
+	for(int i = 0; i < 5; ++i){
+		mixer.addSource(nullptr);
+	}
 }
 
 void PlaybackSystem::begin(){
 	if(task.running) return;
-
-	//TODO - create EditSlots with config from SaveManager, bake, init PlaybackSlots with RamFile from baking
-	for(int i = 0; i < 5; ++i){
-		SlotConfig conf;
-		conf.sample.sample = Sample::SampleType(i);
-		conf.sample.fileIndex = i;
-		conf.slotIndex = i;
-
-		File temp = openSample(conf);
-		slots[i] = new PlaybackSlot(RamFile::open(temp));
-		temp.close();
-		mixer.addSource(&slots[i]->getGenerator());
-	}
 
 	task.start(0, 0);
 }
