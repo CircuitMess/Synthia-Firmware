@@ -27,6 +27,8 @@ PlaybackSystem::PlaybackSystem() : output(i2s_config, i2s_pin_config, I2S_NUM_0)
 void PlaybackSystem::begin(){
 	if(task.running) return;
 
+	setVolume(Sliders.getRightPotValue());
+
 	//TODO - create EditSlots with config from SaveManager, bake, init PlaybackSlots with RamFile from baking
 	for(int i = 0; i < 5; ++i){
 		SlotConfig conf;
@@ -98,4 +100,15 @@ void PlaybackSystem::processJob(AudioJob &job){
 
 const SlotConfig& PlaybackSystem::getConfig(uint8_t slot){
 	return configs[slot];
+}
+
+uint8_t PlaybackSystem::getVolume() const{
+	return volume;
+}
+
+void PlaybackSystem::setVolume(uint8_t volume){
+	PlaybackSystem::volume = volume;
+	float gain = volume / 255.0; //TODO - add function for volume level curve
+
+	output.setGain(gain);
 }
