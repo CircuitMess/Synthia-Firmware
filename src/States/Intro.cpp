@@ -10,11 +10,11 @@ static const char* TAG = "Intro";
 
 // TODO: anims
 const Intro::AnimMapping Intro::IntroAnims[5] = {
-		{ Synthia.TrackMatrix, "/Intro/Track.gif" },
-		{ Synthia.CursorMatrix, "/Intro/Cursor.gif" },
-		{ Synthia.SlidersMatrix, "/Intro/Sliders.gif" },
-		{ Synthia.TrackRGB, "/Intro/TrackRGB.gif" },
-		{ Synthia.SlotRGB, "/Intro/SlotRGB.gif" }
+		{ Synthia.TrackMatrix, "/Placeholder/Track.gif" },
+		{ Synthia.CursorMatrix, "/Placeholder/Cursor.gif" },
+		{ Synthia.SlidersMatrix, "/Placeholder/Sliders.gif" },
+		{ Synthia.TrackRGB, "/Placeholder/TrackRGB.gif" },
+		{ Synthia.SlotRGB, "/Placeholder/SlotRGB.gif" }
 };
 
 void Intro::onStart(){
@@ -25,10 +25,13 @@ void Intro::onStart(){
 			continue;
 		}
 
-		anims[i] = std::unique_ptr<MatrixAnimGIF>(new MatrixAnimGIF(file));
+		anims[i] = std::unique_ptr<MatrixAnimGIF>(new MatrixAnimGIF(RamFile::open(file)));
 
 		anims[i]->getGIF().setLoopMode(GIF::SINGLE);
 		anims[i]->setMatrix(&IntroAnims[i].matrix);
+	}
+
+	for(int i = 0; i < 5; i++){
 		anims[i]->start();
 	}
 
@@ -82,6 +85,10 @@ void Intro::loop(uint micros){
 
 			for(int i = 0; i < 5; i++){
 				anims[i]->stop();
+				if(&IntroAnims[i].matrix != &Synthia.TrackMatrix){
+					IntroAnims[i].matrix.clear();
+					IntroAnims[i].matrix.push();
+				}
 			}
 
 			// TODO: start loading anim
