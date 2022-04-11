@@ -10,12 +10,12 @@
 
 class EditSlot : public SampleSlot {
 public:
-	EditSlot(const SlotConfig& config);
+	EditSlot(const SlotConfig& config, File file);
 	~EditSlot() override;
 
 	void setEffect(EffectData::Type type, uint8_t intensity);
 	void setSpeed(uint8_t speed);
-	void setSample(const Sample& sample);
+	void setSample(const Sample& sample, File file);
 
 	Generator& getGenerator() override;
 	SlotConfig getConfig();

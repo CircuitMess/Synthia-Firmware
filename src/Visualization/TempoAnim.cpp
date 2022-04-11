@@ -2,7 +2,7 @@
 #include "TempoAnim.h"
 
 TempoAnim::TempoAnim(Matrix* matrix) : MatrixAnim(matrix){
-	setWidth(12);
+	setWidth(16);
 	steps = getWidth()*2 - 2;
 	setTempo(120);
 }

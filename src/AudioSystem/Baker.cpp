@@ -12,19 +12,7 @@ void Baker::start(){
 	if(state != WAITING) return;
 	state = WORKING;
 
-	//open ramfile and start bake process for all five slots
-	for(uint8_t i = 0; i < 5; i++){
-		auto config = configs[i];
-		auto editSlot = new EditSlot(config);
-		auto file = RamFile::create();
-		auto slotbaker = new SlotBaker(editSlot, file);
 
-		slotFiles[i] = file;
-		editSlots[i] = editSlot;
-		slotBakers[i] = slotbaker;
-
-		slotbaker->start();
-	}
 	ESP_LOGI("Baker", "Start baking all five slots");
 	task.start(0, 0);
 }
@@ -33,6 +21,8 @@ void Baker::bake(){
 	uint32_t time = millis();
 	bool running = true;
 	bool bakersRunning[5] = {true, true, true, true, true};
+
+	prepareSamples();
 
 	while(running){
 		running = false;
@@ -58,4 +48,24 @@ void Baker::bake(){
 
 bool Baker::isDone(){
 	return state == DONE;
+}
+
+void Baker::prepareSamples(){
+	//open ramfile and start bake process for all five slots
+	for(uint8_t i = 0; i < 5; i++){
+		auto config = configs[i];
+		auto file = RamFile::create();
+
+		File sampleFile = openSample(config);
+		auto editSlot = new EditSlot(config, RamFile::open(sampleFile));
+		sampleFile.close();
+
+		auto slotbaker = new SlotBaker(editSlot, file);
+
+		slotFiles[i] = file;
+		editSlots[i] = editSlot;
+		slotBakers[i] = slotbaker;
+
+		slotbaker->start();
+	}
 }
