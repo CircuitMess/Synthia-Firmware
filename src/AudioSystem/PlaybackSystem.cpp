@@ -22,6 +22,9 @@ const i2s_config_t i2s_config = {
 
 PlaybackSystem::PlaybackSystem() : output(i2s_config, i2s_pin_config, I2S_NUM_0), jobs(15, sizeof(AudioJob)), task("Playback", PlaybackSystem::taskFunc, 4096, this){
 	output.setSource(&mixer);
+	for(int i = 0; i < 5; ++i){
+		mixer.addSource(nullptr);
+	}
 }
 
 void PlaybackSystem::begin(){
@@ -29,33 +32,26 @@ void PlaybackSystem::begin(){
 
 	setVolume(Sliders.getRightPotValue());
 
-	//TODO - create EditSlots with config from SaveManager, bake, init PlaybackSlots with RamFile from baking
-	for(int i = 0; i < 5; ++i){
-		SlotConfig conf;
-		conf.sample.sample = Sample::SampleType(i);
-		conf.sample.fileIndex = i;
-		conf.slotIndex = i;
-
-		File temp = openSample(conf);
-		slots[i] = new PlaybackSlot(RamFile::open(temp));
-		temp.close();
-		mixer.addSource(&slots[i]->getGenerator());
-	}
-
 	task.start(0, 0);
 }
 
 void PlaybackSystem::block(uint8_t slot){
+	if(!task.running) return;
+
 	AudioJob job { AudioJob::SET, slot, nullptr };
 	jobs.send(&job);
 }
 
 void PlaybackSystem::play(uint8_t slot){
+	if(!task.running) return;
+
 	AudioJob job { AudioJob::PLAY, slot, nullptr };
 	jobs.send(&job);
 }
 
 void PlaybackSystem::set(uint8_t slot, File file, const SlotConfig& config){
+	if(!task.running) return;
+
 	auto temp = new PlaybackSlot(file);
 	configs[slot] = config;
 	AudioJob job { AudioJob::SET, slot, temp };
@@ -63,6 +59,8 @@ void PlaybackSystem::set(uint8_t slot, File file, const SlotConfig& config){
 }
 
 void PlaybackSystem::edit(uint8_t slot, EditSlot* editSlot){
+	if(!task.running) return;
+
 	AudioJob job { AudioJob::SET, slot, editSlot };
 	jobs.send(&job);
 }

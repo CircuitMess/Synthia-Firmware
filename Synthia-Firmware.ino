@@ -9,6 +9,8 @@
 #include "src/Services/SlotPlayer.h"
 #include "src/Visualization/Visualizer.h"
 #include "src/Visualization/RGBController.h"
+#include "src/States/State.h"
+#include "src/States/Intro.h"
 
 void initLog(){
 	esp_log_level_set("*", ESP_LOG_NONE);
@@ -31,6 +33,9 @@ void setup(){
 
 	RGBTrack.begin(&Synthia.TrackRGB);
 	RGBSlot.begin(&Synthia.SlotRGB);
+
+	State* state = new Intro();
+	state->start();
 }
 
 void loop(){
