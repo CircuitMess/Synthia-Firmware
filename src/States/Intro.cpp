@@ -115,5 +115,4 @@ void Intro::loop(uint micros){
 
 void Intro::launch(){
 	// TODO: start track edit
-	Playback.begin();
 }
