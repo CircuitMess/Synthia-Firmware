@@ -40,7 +40,7 @@ void Baker::bake(){
 		for(uint8_t i = 0; i < 5; i++){
 			auto slotBaker = slotBakers[i];
 			if(slotBaker->isDone() && bakersRunning[i]){
-				Playback.set(i, slotFiles[i]);
+				Playback.set(i, slotFiles[i], configs[i]);
 				bakersRunning[i] = false;
 			}
 			running |= bakersRunning[i];

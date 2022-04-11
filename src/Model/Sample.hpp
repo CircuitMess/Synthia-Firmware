@@ -5,7 +5,7 @@
 
 struct Sample{
 	enum class SampleType : uint8_t {
-		KICK, SNARE, CLAP, CLOSEDHIHAT, OPENHIHAT, RECORDING
+		KICK, SNARE, CLAP, CLOSEDHIHAT, OPENHIHAT, RECORDING, SIZE
 	} sample;
 	uint8_t fileIndex;
 };

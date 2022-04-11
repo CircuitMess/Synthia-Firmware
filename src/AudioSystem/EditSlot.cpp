@@ -56,6 +56,19 @@ void EditSlot::setSpeed(uint8_t speed){
 	config.speed = speed;
 }
 
+void EditSlot::setSample(const Sample& sample){
+	//don't do anything if sample wasn't changed (except for recordings, which can be modified)
+	if(config.sample.sample == sample.sample && sample.sample != Sample::SampleType::RECORDING) return;
+
+	config.sample = sample;
+	File sampleFile = openSample(config);
+	delete playback;
+
+	playback = new PlaybackSlot(RamFile::open(sampleFile));
+	sampleFile.close();
+	speeder.setSource(&playback->getSource());
+}
+
 Generator& EditSlot::getGenerator(){
 	return effector;
 }

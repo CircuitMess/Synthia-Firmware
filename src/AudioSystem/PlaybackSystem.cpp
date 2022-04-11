@@ -5,7 +5,7 @@
 
 PlaybackSystem Playback;
 
-const i2s_config_t config = {
+const i2s_config_t i2s_config = {
 		.mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_RX),
 		.sample_rate = SAMPLE_RATE,
 		.bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
@@ -20,8 +20,7 @@ const i2s_config_t config = {
 };
 
 
-PlaybackSystem::PlaybackSystem() : output(config, i2s_pin_config, I2S_NUM_0), jobs(15, sizeof(AudioJob)),
-								   task("Playback", PlaybackSystem::taskFunc, 4096, this){
+PlaybackSystem::PlaybackSystem() : output(i2s_config, i2s_pin_config, I2S_NUM_0), jobs(15, sizeof(AudioJob)), task("Playback", PlaybackSystem::taskFunc, 4096, this){
 	output.setSource(&mixer);
 }
 
@@ -56,15 +55,15 @@ void PlaybackSystem::play(uint8_t slot){
 	jobs.send(&job);
 }
 
-void PlaybackSystem::set(uint8_t slot, File file){
+void PlaybackSystem::set(uint8_t slot, File file, const SlotConfig& config){
 	auto temp = new PlaybackSlot(file);
+	configs[slot] = config;
 	AudioJob job { AudioJob::SET, slot, temp };
 	jobs.send(&job);
 }
 
-EditSlot* PlaybackSystem::edit(uint8_t slot, const SlotConfig& config){
-	auto temp = new EditSlot(config);
-	configs[slot] = config;
+EditSlot* PlaybackSystem::edit(uint8_t slot){
+	auto temp = new EditSlot(configs[slot]);
 	AudioJob job { AudioJob::SET, slot, temp };
 	jobs.send(&job);
 	return temp;
