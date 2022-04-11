@@ -6,8 +6,8 @@
 
 class SaveManager {
 public:
-	SaveData load(uint8_t trackSlot, bool saveLastEdited = true);
-	void store(uint8_t trackSlot, SaveData config,  bool saveLastEdited = true);
+	SaveData load(uint8_t trackSlot, bool saveLastEdited = false);
+	void store(uint8_t trackSlot, SaveData config,  bool saveLastEdited = false);
 	SaveData loadLast();
 
 private:
