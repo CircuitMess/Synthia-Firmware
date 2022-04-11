@@ -29,9 +29,9 @@ private:
 	std::array<std::unique_ptr<MatrixAnimGIF>, 5> anims;
 	std::unique_ptr<MatrixAnimGIF> loadingAnim;
 
-	File bakedFiles[5];
-
 	bool introAnimDone = false;
+
+	void launch();
 };
 
 

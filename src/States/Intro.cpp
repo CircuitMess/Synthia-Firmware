@@ -76,8 +76,8 @@ void Intro::loop(uint micros){
 
 		if(doneAnims == 5){
 			if(baker->isDone()){
-				// TODO: start track edit
 				LoopManager::removeListener(this);
+				launch();
 				return;
 			}
 
@@ -91,7 +91,7 @@ void Intro::loop(uint micros){
 				}
 			}
 
-			// TODO: start loading anim
+			// TODO: add loading animation
 			auto file = SPIFFS.open("/Loading.gif");
 			if(!file){
 				ESP_LOGE(TAG, "Can't open loading file");
@@ -109,5 +109,11 @@ void Intro::loop(uint micros){
 
 	if(!baker->isDone()) return;
 
+	LoopManager::removeListener(this);
+	launch();
+}
+
+void Intro::launch(){
 	// TODO: start track edit
+	Playback.begin();
 }
