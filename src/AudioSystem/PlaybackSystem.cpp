@@ -30,6 +30,8 @@ PlaybackSystem::PlaybackSystem() : output(i2s_config, i2s_pin_config, I2S_NUM_0)
 void PlaybackSystem::begin(){
 	if(task.running) return;
 
+	setVolume(Sliders.getRightPotValue());
+
 	task.start(0, 0);
 }
 
@@ -56,13 +58,11 @@ void PlaybackSystem::set(uint8_t slot, File file, const SlotConfig& config){
 	jobs.send(&job);
 }
 
-EditSlot* PlaybackSystem::edit(uint8_t slot){
-	if(!task.running) return nullptr;
+void PlaybackSystem::edit(uint8_t slot, EditSlot* editSlot){
+	if(!task.running) return;
 
-	auto temp = new EditSlot(configs[slot]);
-	AudioJob job { AudioJob::SET, slot, temp };
+	AudioJob job { AudioJob::SET, slot, editSlot };
 	jobs.send(&job);
-	return temp;
 }
 
 void PlaybackSystem::taskFunc(Task* task){
@@ -96,4 +96,15 @@ void PlaybackSystem::processJob(AudioJob &job){
 
 const SlotConfig& PlaybackSystem::getConfig(uint8_t slot){
 	return configs[slot];
+}
+
+uint8_t PlaybackSystem::getVolume() const{
+	return volume;
+}
+
+void PlaybackSystem::setVolume(uint8_t volume){
+	PlaybackSystem::volume = volume;
+	float gain = volume / 255.0; //TODO - add function for volume level curve
+
+	output.setGain(gain);
 }

@@ -59,3 +59,7 @@ void VisualizerManager::loop(uint32_t time){
 void VisualizerManager::setMain(VisualizerBase* main){
 	this->main = main;
 }
+
+void VisualizerManager::clearMain(){
+	main = nullptr;
+}
