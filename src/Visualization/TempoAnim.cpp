@@ -37,13 +37,22 @@ void TempoAnim::onStop(){
 void TempoAnim::setTempo(uint8_t tempo){
 	tempo = max((uint8_t) 1, tempo);
 
-	uint32_t currentStepTime = round((float) step * stepTime);
-	uint32_t currentLoopTime = (millis() - startTime) % (int) round((float) steps * stepTime);
-	uint32_t diff = currentLoopTime - currentStepTime;
+	auto oldTempo = this->tempo;
+	auto oldStepTime = this->stepTime;
 
 	this->tempo = tempo;
 	float beatTime = 60000.0f / (float) tempo;
 	stepTime = beatTime / (float) steps;
+
+	// initial state
+	if(oldTempo == 0 || oldStepTime == 0){
+		startTime = millis();
+		return;
+	}
+
+	uint32_t currentStepTime = round((float) step * oldStepTime);
+	uint32_t currentLoopTime = (millis() - startTime) % (int) round((float) steps * oldStepTime);
+	uint32_t diff = currentLoopTime - currentStepTime;
 
 	startTime = round((float) millis() - (float) step * stepTime - (float) diff);
 }
