@@ -60,11 +60,9 @@ void PlaybackSystem::set(uint8_t slot, File file, const SlotConfig& config){
 	jobs.send(&job);
 }
 
-EditSlot* PlaybackSystem::edit(uint8_t slot){
-	auto temp = new EditSlot(configs[slot]);
-	AudioJob job { AudioJob::SET, slot, temp };
+void PlaybackSystem::edit(uint8_t slot, EditSlot* editSlot){
+	AudioJob job { AudioJob::SET, slot, editSlot };
 	jobs.send(&job);
-	return temp;
 }
 
 void PlaybackSystem::taskFunc(Task* task){
