@@ -29,7 +29,7 @@ void LEDStripImpl::setMidFill(uint8_t value){
 void LEDStripImpl::setMidSingle(uint8_t index){
 	Synthia.CursorMatrix.stopAnimations();
 	Synthia.CursorMatrix.clear();
-	Synthia.CursorMatrix.drawPixel(index, {255, 255, 255, 255});
+	Synthia.CursorMatrix.drawPixel(index, {255, 255, 255, 100});
 	Synthia.CursorMatrix.push();
 }
 
