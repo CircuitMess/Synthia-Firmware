@@ -3,6 +3,7 @@
 #include "Intro.h"
 #include "../AudioSystem/PlaybackSystem.h"
 #include "../SaveManager.h"
+#include "TrackEditState.h"
 #include <Devices/Matrix/MatrixAnimGIF.h>
 #include <Loop/LoopManager.h>
 
@@ -114,5 +115,9 @@ void Intro::loop(uint micros){
 }
 
 void Intro::launch(){
-	// TODO: start track edit
+	stop();
+	delete this;
+
+	auto trackEdit = new TrackEditState();
+	trackEdit->start();
 }
