@@ -58,6 +58,14 @@ void TrackEditState::rightEncMove(int8_t amount){
 		cursor = (cursor + amount) % 16;
 	}
 
+	for(uint8_t i = 0; i < 5; i++){
+		if(slotEraser[i]){
+			track.timeline.clear(cursor, i);
+		}else if(Input::getInstance()->getButtonState(i)){
+			track.timeline.set(cursor, i);
+		}
+	}
+
 	pushTrackVis();
 }
 
@@ -88,6 +96,11 @@ void TrackEditState::buttonHeld(uint i){
 	}
 }
 
+void TrackEditState::buttonReleased(uint i){
+	if(i >= 5) return;
+	slotEraser[i] = false;
+}
+
 void TrackEditState::click(uint8_t i){
 	if(i < 5){
 		track.timeline.set(cursor, i);
@@ -109,6 +122,7 @@ void TrackEditState::doubleClick(uint8_t i){
 	if(i >= 5) return;
 
 	track.timeline.clear(cursor, i);
+	slotEraser[i] = true;
 	pushTrackVis();
 }
 

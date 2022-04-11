@@ -44,7 +44,10 @@ private:
 	uint32_t clickTimes[5] = {0};
 	uint32_t doubleClickInterval = 500;//[ms]
 
+	bool slotEraser[5] = { false };
+
 	void pushTrackVis();
+	void buttonReleased(uint i) override;
 
 };
 
