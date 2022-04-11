@@ -34,7 +34,7 @@ private:
 	void leftPotMove(uint8_t value) override;
 	void rightPotMove(uint8_t value) override;
 
-	Track track;
+	Track track = { };
 	static uint8_t cursor;
 
 	TempoVisualizer tempoVis;

@@ -8,7 +8,7 @@
 uint8_t TrackEditState::cursor = 0;
 
 TrackEditState::TrackEditState(){
-	setTrack(saveManager.loadLast().track);
+
 }
 
 void TrackEditState::onStart(){
