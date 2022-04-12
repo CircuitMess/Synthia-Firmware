@@ -59,6 +59,10 @@ void Baker::prepare(){
 
 	prepareSamples();
 
+	for(int i = 0; i < 5; i++){
+		slotBakers[i]->start();
+	}
+
 	state = BAKING;
 }
 
@@ -81,7 +85,5 @@ void Baker::prepareSamples(){
 		slotFiles[i] = file;
 		editSlots[i] = editSlot;
 		slotBakers[i] = slotbaker;
-
-		slotbaker->start();
 	}
 }
