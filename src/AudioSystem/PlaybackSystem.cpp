@@ -74,7 +74,10 @@ void PlaybackSystem::taskFunc(Task* task){
 			if(!system->jobs.receive(&job)) continue;
 			system->processJob(job);
 		}
+
 		system->output.loop(0);
+
+		vTaskDelay(1);
 	}
 }
 

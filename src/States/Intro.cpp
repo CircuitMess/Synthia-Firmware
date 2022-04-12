@@ -26,7 +26,9 @@ void Intro::onStart(){
 			continue;
 		}
 
-		anims[i] = std::unique_ptr<MatrixAnimGIF>(new MatrixAnimGIF(RamFile::open(file)));
+		file = RamFile::open(file);
+
+		anims[i] = std::unique_ptr<MatrixAnimGIF>(new MatrixAnimGIF(file));
 
 		anims[i]->getGIF().setLoopMode(GIF::SINGLE);
 		anims[i]->setMatrix(&IntroAnims[i].matrix);
