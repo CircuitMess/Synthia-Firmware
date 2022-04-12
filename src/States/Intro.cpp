@@ -45,8 +45,6 @@ void Intro::onStart(){
 		configs[i].sample.sample = (Sample::SampleType) i;
 		configs[i].slotIndex = i;
 	}
-	configs[4].sample.sample = Sample::SampleType::KICK;
-	configs[4].speed = 50;
 	baker = std::unique_ptr<Baker>(new Baker(configs));
 
 	baker->start();
@@ -63,7 +61,9 @@ void Intro::onStop(){
 		anims[i]->stop();
 	}
 
-	loadingAnim->stop();
+	if(loadingAnim){
+		loadingAnim->stop();
+	}
 
 	LoopManager::removeListener(this);
 }
