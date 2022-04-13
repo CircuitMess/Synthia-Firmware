@@ -26,5 +26,5 @@ void TempoVisualizer::visualize(){
 	track.drawString(5, 5, text);
 	track.push();
 
-	LEDStrip.setLeft(value);
+	LEDStrip.setLeft(map(value, 60, 220, 0, 255));
 }

@@ -24,8 +24,8 @@ protected:
 private:
 	uint16_t steps;
 
-	uint8_t tempo;
-	float stepTime;
+	uint8_t tempo = 0;
+	float stepTime = 0;
 
 	uint32_t step = 0;
 	uint32_t startTime;

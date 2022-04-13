@@ -58,6 +58,14 @@ void TrackEditState::rightEncMove(int8_t amount){
 		cursor = (cursor + amount) % 16;
 	}
 
+	for(uint8_t i = 0; i < 5; i++){
+		if(slotEraser[i]){
+			track.timeline.clear(cursor, i);
+		}else if(Input::getInstance()->getButtonState(i)){
+			track.timeline.set(cursor, i);
+		}
+	}
+
 	pushTrackVis();
 }
 
@@ -67,7 +75,7 @@ void TrackEditState::leftEncMove(int8_t amount){
 }
 
 void TrackEditState::leftPotMove(uint8_t value){
-	track.tempo = map(value, 0, 255, 60, 255);
+	track.tempo = map(value, 0, 255, 60, 220);
 	tempoVis.push(track.tempo);
 }
 
@@ -78,7 +86,8 @@ void TrackEditState::rightPotMove(uint8_t value){
 
 
 void TrackEditState::buttonHeld(uint i){
-	if(i < 5){
+	int slot = btnToSlot(i);
+	if(slot != -1){
 		//TODO - open SampleEditState
 	}else if(i == BTN_ENC_R){
 		track.timeline.clear(cursor);
@@ -88,9 +97,17 @@ void TrackEditState::buttonHeld(uint i){
 	}
 }
 
+void TrackEditState::buttonReleased(uint i){
+	int slot = btnToSlot(i);
+	if(i == -1) return;
+	slotEraser[slot] = false;
+}
+
 void TrackEditState::click(uint8_t i){
-	if(i < 5){
-		track.timeline.set(cursor, i);
+	int slot = btnToSlot(i);
+
+	if(slot != -1){
+		track.timeline.set(cursor, slot);
 		pushTrackVis();
 	}else if(i == BTN_ENC_R){
 		for(int j = 0; j < 5; ++j){
@@ -106,28 +123,33 @@ void TrackEditState::click(uint8_t i){
 }
 
 void TrackEditState::doubleClick(uint8_t i){
-	if(i >= 5) return;
+	int slot = btnToSlot(i);
 
-	track.timeline.clear(cursor, i);
+	if(slot == -1) return;
+
+	track.timeline.clear(cursor, slot);
+	slotEraser[slot] = true;
 	pushTrackVis();
 }
 
 void TrackEditState::buttonPressed(uint i){
-	if(i >= 5){
+	int slot = btnToSlot(i);
+
+	if(slot == -1){
 		click(i);
 		return;
 	}
 
-	if(!clickTimes[i]){
+	if(!clickTimes[slot]){
 		click(i);
 	}else{
-		if(clickTimes[i] + doubleClickInterval >= millis()){
+		if(clickTimes[slot] + doubleClickInterval >= millis()){
 			doubleClick(i);
 		}else{
 			click(i);
 		}
 	}
-	clickTimes[i] = millis();
+	clickTimes[slot] = millis();
 
 }
 
@@ -137,4 +159,18 @@ void TrackEditState::pushTrackVis(){
 	data.timeline = track.timeline;
 
 	trackVis.push(data);
+}
+
+int TrackEditState::btnToSlot(uint8_t i){
+	static const std::unordered_map<uint8_t, uint8_t> map = {
+			{ BTN_1, 0 },
+			{ BTN_2, 1 },
+			{ BTN_3, 2 },
+			{ BTN_4, 3 },
+			{ BTN_5, 4 },
+	};
+
+	auto pair = map.find(i);
+	if(pair == map.end()) return -1;
+	return pair->second;
 }

@@ -4,18 +4,20 @@
 #include "../Model/SlotConfig.h"
 #include <array>
 #include <Util/Task.h>
+#include <Loop/LoopListener.h>
 
 class SlotBaker;
 class EditSlot;
 
-class Baker {
+class Baker : public LoopListener {
 public:
-	Baker(std::array<SlotConfig, 5>& configs);
+	Baker(const std::array<SlotConfig, 5>& configs);
 	void start();
 	bool isDone();
+	void loop(uint micros) override;
 
 private:
-	std::array<SlotConfig, 5>& configs;
+	std::array<SlotConfig, 5> configs;
 	SlotBaker* slotBakers[5];
 	File slotFiles[5];
 	EditSlot* editSlots[5];
@@ -23,10 +25,10 @@ private:
 	Task task;
 
 	enum {
-		WAITING, WORKING, DONE
+		WAITING, PREPARING, BAKING, DONE
 	} state = WAITING;
 
-	void bake();
+	void prepare();
 	void prepareSamples();
 };
 
