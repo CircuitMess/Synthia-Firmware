@@ -60,7 +60,7 @@ void TrackEditState::rightEncMove(int8_t amount){
 
 
 	for(auto btn : { BTN_1, BTN_2, BTN_3, BTN_4, BTN_5 }){
-		uint8_t slot = btnToSlot(btn);
+		uint8_t slot = Synthia.btnToSlot(btn);
 
 		if(slotEraser[slot]){
 			track.timeline.clear(cursor, slot);
@@ -91,7 +91,8 @@ void TrackEditState::rightPotMove(uint8_t value){
 void TrackEditState::buttonHeld(uint i){
 	int slot = Synthia.btnToSlot(i);
 	if(slot != -1){
-		//TODO - open SampleEditState
+		auto sampleEdit = new SampleEditState(this, slot);
+		sampleEdit->push(this);
 	}else if(i == BTN_ENC_R){
 		track.timeline.clear(cursor);
 		pushTrackVis();
