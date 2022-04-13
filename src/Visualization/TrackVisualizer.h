@@ -6,7 +6,7 @@
 
 struct TrackVisData {
 	TrackTimeline timeline;
-	uint8_t cursor = 0;
+	uint8_t cursor;
 };
 
 class TrackVisualizer : public Visualizer<TrackVisData> {
