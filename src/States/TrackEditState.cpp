@@ -19,6 +19,7 @@ TrackEditState::TrackEditState(){
 
 void TrackEditState::onStart(){
 	LEDStrip.setLeft(track.tempo);
+	Playback.setVolume(Sliders.getRightPotValue());
 	LEDStrip.setRight(Playback.getVolume());
 	pushTrackVis();
 	trackVis.setMain();
