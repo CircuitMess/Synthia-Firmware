@@ -4,6 +4,7 @@
 #include "../AudioSystem/PlaybackSystem.h"
 #include "../SaveManager.h"
 #include "SaveState.h"
+#include "PlaybackState.h"
 
 uint8_t TrackEditState::cursor = 0;
 
@@ -95,7 +96,8 @@ void TrackEditState::buttonHeld(uint i){
 		track.timeline.clear(cursor);
 		pushTrackVis();
 	}else if(i == BTN_ENC_L){
-		//TODO - open PlaybackState
+		auto state = new PlaybackState(track.timeline, track.tempo);
+		state->push(this);
 	}
 }
 
