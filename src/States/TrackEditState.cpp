@@ -118,9 +118,6 @@ void TrackEditState::click(uint8_t i){
 			}
 		}
 		pushTrackVis();
-	}else if(i == BTN_ENC_L){
-		auto save = new SaveState(this);
-		save->push(this);
 	}
 }
 
@@ -156,11 +153,7 @@ void TrackEditState::buttonPressed(uint i){
 }
 
 void TrackEditState::pushTrackVis(){
-	TrackVisData data;
-	data.cursor = cursor;
-	data.timeline = track.timeline;
-
-	trackVis.push(data);
+	trackVis.push({ track.timeline, cursor });
 }
 
 int TrackEditState::btnToSlot(uint8_t i){
