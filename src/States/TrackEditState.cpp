@@ -4,6 +4,7 @@
 #include "../AudioSystem/PlaybackSystem.h"
 #include "../SaveManager.h"
 #include "SaveState.h"
+#include "SampleEditState.h"
 
 uint8_t TrackEditState::cursor = 0;
 
@@ -86,7 +87,7 @@ void TrackEditState::rightPotMove(uint8_t value){
 
 
 void TrackEditState::buttonHeld(uint i){
-	int slot = btnToSlot(i);
+	int slot = Synthia.btnToSlot(i);
 	if(slot != -1){
 		//TODO - open SampleEditState
 	}else if(i == BTN_ENC_R){
@@ -98,13 +99,13 @@ void TrackEditState::buttonHeld(uint i){
 }
 
 void TrackEditState::buttonReleased(uint i){
-	int slot = btnToSlot(i);
+	int slot = Synthia.btnToSlot(i);
 	if(i == -1) return;
 	slotEraser[slot] = false;
 }
 
 void TrackEditState::click(uint8_t i){
-	int slot = btnToSlot(i);
+	int slot = Synthia.btnToSlot(i);
 
 	if(slot != -1){
 		track.timeline.set(cursor, slot);
@@ -123,7 +124,7 @@ void TrackEditState::click(uint8_t i){
 }
 
 void TrackEditState::doubleClick(uint8_t i){
-	int slot = btnToSlot(i);
+	int slot = Synthia.btnToSlot(i);
 
 	if(slot == -1) return;
 
@@ -133,7 +134,7 @@ void TrackEditState::doubleClick(uint8_t i){
 }
 
 void TrackEditState::buttonPressed(uint i){
-	int slot = btnToSlot(i);
+	int slot = Synthia.btnToSlot(i);
 
 	if(slot == -1){
 		click(i);
@@ -159,18 +160,4 @@ void TrackEditState::pushTrackVis(){
 	data.timeline = track.timeline;
 
 	trackVis.push(data);
-}
-
-int TrackEditState::btnToSlot(uint8_t i){
-	static const std::unordered_map<uint8_t, uint8_t> map = {
-			{ BTN_1, 0 },
-			{ BTN_2, 1 },
-			{ BTN_3, 2 },
-			{ BTN_4, 3 },
-			{ BTN_5, 4 },
-	};
-
-	auto pair = map.find(i);
-	if(pair == map.end()) return -1;
-	return pair->second;
 }

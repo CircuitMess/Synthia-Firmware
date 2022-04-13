@@ -48,9 +48,6 @@ private:
 
 	void pushTrackVis();
 	void buttonReleased(uint i) override;
-
-
-	inline int btnToSlot(uint8_t i);
 };
 
 
