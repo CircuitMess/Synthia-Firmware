@@ -58,11 +58,14 @@ void TrackEditState::rightEncMove(int8_t amount){
 		cursor = (cursor + amount) % 16;
 	}
 
-	for(uint8_t i = 0; i < 5; i++){
-		if(slotEraser[i]){
-			track.timeline.clear(cursor, i);
-		}else if(Input::getInstance()->getButtonState(i)){
-			track.timeline.set(cursor, i);
+
+	for(auto btn : { BTN_1, BTN_2, BTN_3, BTN_4, BTN_5 }){
+		uint8_t slot = btnToSlot(btn);
+
+		if(slotEraser[slot]){
+			track.timeline.clear(cursor, slot);
+		}else if(Input::getInstance()->getButtonState(btn)){
+			track.timeline.set(cursor, slot);
 		}
 	}
 
