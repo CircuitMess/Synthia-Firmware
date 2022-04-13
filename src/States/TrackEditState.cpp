@@ -9,16 +9,15 @@
 uint8_t TrackEditState::cursor = 0;
 
 TrackEditState::TrackEditState(){
+	for(uint8_t i = 0; i < 5; i++){
+		setButtonHoldTime(i, 500);
+	}
 
+	setButtonHoldTime(BTN_ENC_R, 500);
+	setButtonHoldTime(BTN_ENC_L, 500);
 }
 
 void TrackEditState::onStart(){
-	for(uint8_t i = 0; i < 5; i++){
-		setButtonHoldTime(i, 800);
-	}
-	setButtonHoldTime(BTN_ENC_R, 800);
-	setButtonHoldTime(BTN_ENC_L, 800);
-
 	LEDStrip.setLeft(track.tempo);
 	LEDStrip.setRight(Playback.getVolume());
 	pushTrackVis();
@@ -120,9 +119,6 @@ void TrackEditState::click(uint8_t i){
 			}
 		}
 		pushTrackVis();
-	}else if(i == BTN_ENC_L){
-		auto save = new SaveState(this);
-		save->push(this);
 	}
 }
 
@@ -158,9 +154,5 @@ void TrackEditState::buttonPressed(uint i){
 }
 
 void TrackEditState::pushTrackVis(){
-	TrackVisData data;
-	data.cursor = cursor;
-	data.timeline = track.timeline;
-
-	trackVis.push(data);
+	trackVis.push({ track.timeline, cursor });
 }
