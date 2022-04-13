@@ -9,7 +9,7 @@ void EffectVisualizer::visualize(){
 
 	if(data.type == EffectData::Type::VOLUME){
 		LEDStrip.setMidFillFromCenter((int8_t)((int)(data.intensity) - 128));
-		LEDStrip.setMidFillFromCenter((int8_t)((int)(data.intensity) - 128));
+		LEDStrip.setRightFromCenter((int8_t)((int)(data.intensity) - 128));
 	}else{
 		LEDStrip.setMidFill(data.intensity);
 		LEDStrip.setRight(data.intensity);
