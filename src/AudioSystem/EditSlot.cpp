@@ -56,9 +56,9 @@ void EditSlot::setSpeed(uint8_t speed){
 	config.speed = speed;
 }
 
-void EditSlot::setSample(const Sample::SampleType& sample, File file){
+void EditSlot::setSample(Sample::Type type, File file){
 	//don't do anything if sample wasn't changed (except for recordings, which can be modified)
-	if(config.sample.sample == sample && sample != Sample::SampleType::RECORDING) return;
+	if(config.sample.type == type && type != Sample::Type::RECORDING) return;
 
 	config.sample.sample = sample;
 	delete playback;

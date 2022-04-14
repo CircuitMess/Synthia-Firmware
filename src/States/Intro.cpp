@@ -42,7 +42,7 @@ void Intro::onStart(){
 
 	std::array<SlotConfig, 5> configs;
 	for(int i = 0; i < 5; i++){
-		configs[i].sample.sample = (Sample::SampleType) i;
+		configs[i].sample.type = (Sample::Type) i;
 		configs[i].slotIndex = i;
 	}
 	baker = std::unique_ptr<Baker>(new Baker(configs));

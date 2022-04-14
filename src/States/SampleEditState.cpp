@@ -8,14 +8,14 @@ SampleEditState::SampleEditState(State* state, uint8_t slot) : State(state), slo
 	//TODO - staviti otvaranje rawSampleova u drugi thread, loading animacija?
 	SlotConfig defaultConfigs[5];
 	for(uint8_t i = 0; i < 5; i++){
-		defaultConfigs[i].sample.sample = (Sample::SampleType)i;
+		defaultConfigs[i].sample.type = (Sample::Type)i;
 		defaultConfigs[i].slotIndex = i;
 
 		File file = openSample(defaultConfigs[i]);
 		rawSamples[i] = RamFile::open(file);
 		file.close();
 	}
-	editSlot = new EditSlot(config, rawSamples[((uint8_t)config.sample.sample)]);
+	editSlot = new EditSlot(config, rawSamples[((uint8_t)config.sample.type)]);
 	Playback.edit(slot, editSlot);
 }
 
@@ -27,7 +27,7 @@ void SampleEditState::onStart(){
 	setButtonHoldTime(slot, 800);
 
 	sampleVis.setMain();
-	sampleVis.push(config.sample.sample);
+	sampleVis.push(config.sample.type);
 	RGBSlot.setColor(slot, MatrixPixel::Yellow);
 
 	//TODO - start rgb anim for track leds
