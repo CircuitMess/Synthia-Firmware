@@ -3,7 +3,14 @@
 #include "LEDStrip.h"
 #include <SPIFFS.h>
 
-SaveVisualizer::SaveVisualizer() : slotAnim(SPIFFS.open("/test.gif")){}
+SaveVisualizer::SaveVisualizer() : slotAnim(SPIFFS.open("/GIF/Save/loadSave.gif"), &Synthia.TrackMatrix),
+								   no(SPIFFS.open("/GIF/Save/no.gif"), &Synthia.TrackMatrix),
+								   yes(SPIFFS.open("/GIF/Save/yes.gif"), &Synthia.TrackMatrix),
+								   load(SPIFFS.open("/GIF/Save/load.gif"), &Synthia.TrackMatrix),
+								   save(SPIFFS.open("/GIF/Save/save.gif"), &Synthia.TrackMatrix){
+	load.setX(8);
+	yes.setX(8);
+}
 
 void SaveVisualizer::visualize(){
 	auto data = getProp();
@@ -26,38 +33,53 @@ void SaveVisualizer::visualize(){
 			break;
 
 		case ActionSelect:{
-			matrix.stopAnimations();
-			matrix.clear();
+			if(slotAnim.isStarted()) slotAnim.stop();
 
-			//TODO - add save bitmap on left, load bitmap on right, selection is drawn inverted
+			if(data.selection && !load.isStarted()){
+				save.reset();
+				save.push();
+				save.stop();
+				load.start();
+			}else if(!data.selection && !save.isStarted()){
+				load.reset();
+				load.push();
+				load.stop();
+				save.start();
+			}
+
 			LEDStrip.setMidSelection(data.selection);
 			break;
 		}
 
 		case Confirmation:
-			matrix.stopAnimations();
-			matrix.clear();
+			if(save.isStarted()) save.stop();
+			if(load.isStarted()) load.stop();
 
-			//TODO - add NO bitmap on left, YES bitmap on right, selection is drawn inverted
+			if(data.selection){
+				no.reset();
+				no.push();
+				no.stop();
+				yes.start();
+			}else{
+				yes.reset();
+				yes.push();
+				yes.stop();
+				no.start();
+			}
 			LEDStrip.setMidSelection(data.selection);
 			break;
 	}
 }
 
-void SaveVisualizer::onStart(){
-	Synthia.CursorMatrix.stopAnimations();
-	Synthia.CursorMatrix.clear();
-	Synthia.CursorMatrix.push();
-
-	Synthia.TrackMatrix.stopAnimations();
-	Synthia.TrackMatrix.clear();
-}
-
 void SaveVisualizer::onStop(){
 	Synthia.TrackMatrix.stopAnimations();
 	Synthia.TrackMatrix.clear();
-	Synthia.TrackMatrix.push();
 
+	Synthia.CursorMatrix.clear();
+}
+
+void SaveVisualizer::onStart(){
+	Synthia.TrackMatrix.clear();
 	Synthia.CursorMatrix.clear();
 	Synthia.CursorMatrix.push();
 }

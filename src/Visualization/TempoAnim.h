@@ -17,6 +17,8 @@ public:
 
 	void loop(uint micros) override;
 
+	void push() override;
+
 protected:
 	void onStart() override;
 	void onStop() override;
@@ -29,8 +31,6 @@ private:
 
 	uint32_t step = 0;
 	uint32_t startTime;
-
-	void pushPixel();
 
 };
 
