@@ -10,7 +10,7 @@ uint8_t TrackEditState::cursor = 0;
 
 TrackEditState::TrackEditState(){
 	for(uint8_t i = 0; i < 5; i++){
-		setButtonHoldTime(i, 500);
+		setButtonHoldTime(Synthia.slotToBtn(i), 500);
 	}
 
 	setButtonHoldTime(BTN_ENC_R, 500);
@@ -29,6 +29,11 @@ void TrackEditState::onStart(){
 	Input::getInstance()->addListener(this);
 	Encoders.addListener(this);
 	Sliders.addListener(this);
+
+	stickySlot = false;
+	for(int i = 0; i < 5; i++){
+		slotEraser[i] = false;
+	}
 }
 
 void TrackEditState::onStop(){
@@ -64,8 +69,10 @@ void TrackEditState::rightEncMove(int8_t amount){
 
 		if(slotEraser[slot]){
 			track.timeline.clear(cursor, slot);
+			stickySlot = true;
 		}else if(Input::getInstance()->getButtonState(btn)){
 			track.timeline.set(cursor, slot);
+			stickySlot = true;
 		}
 	}
 
@@ -91,6 +98,7 @@ void TrackEditState::rightPotMove(uint8_t value){
 void TrackEditState::buttonHeld(uint i){
 	int slot = Synthia.btnToSlot(i);
 	if(slot != -1){
+		if(stickySlot) return;
 		auto sampleEdit = new SampleEditState(this, slot);
 		sampleEdit->push(this);
 	}else if(i == BTN_ENC_R){
@@ -105,6 +113,7 @@ void TrackEditState::buttonReleased(uint i){
 	int slot = Synthia.btnToSlot(i);
 	if(i == -1) return;
 	slotEraser[slot] = false;
+	stickySlot = false;
 }
 
 void TrackEditState::click(uint8_t i){
