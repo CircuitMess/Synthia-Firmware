@@ -32,7 +32,7 @@ void PlaybackSystem::begin(){
 
 	setVolume(Sliders.getRightPotValue());
 
-	task.start(0, 0);
+	task.start(1, 0);
 }
 
 void PlaybackSystem::block(uint8_t slot){
@@ -90,8 +90,11 @@ void PlaybackSystem::processJob(AudioJob &job){
 			output.start();
 			break;
 		case AudioJob::SET:
-			delete slots[job.slot];
-			mixer.setSource(job.slot, &job.sampleSlot->getGenerator());
+			// TODO: only block should set to nullptr. used to remove the slot without deleting it
+			if(job.sampleSlot != nullptr){
+				delete slots[job.slot];
+			}
+			mixer.setSource(job.slot, job.sampleSlot ? &job.sampleSlot->getGenerator() : nullptr);
 			slots[job.slot] = job.sampleSlot;
 			break;
 	}
