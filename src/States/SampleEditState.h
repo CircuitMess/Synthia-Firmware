@@ -10,7 +10,8 @@
 
 class SampleEditState : public State, public InputListener, public EncoderListener, public SliderListener {
 public:
-	SampleEditState(State* state, uint8_t slot);
+	SampleEditState(State* parent, uint8_t slot);
+	virtual ~SampleEditState();
 
 protected:
 	void onStart() override;
@@ -25,7 +26,7 @@ private:
 
 	uint8_t slot = 0;
 	EditSlot *editSlot = nullptr;
-	const SlotConfig& config;
+	SlotConfig config;
 	SampleVisualizer sampleVis;
 	EffectVisualizer effectVis;
 	SampleSpeedVisualizer speedVis;

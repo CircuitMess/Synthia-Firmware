@@ -2,11 +2,13 @@
 #include "../Visualization/RGBController.h"
 #include "../AudioSystem/PlaybackSystem.h"
 #include "../AudioSystem/SlotBaker.h"
+#include "../Visualization/LEDStrip.h"
 
-SampleEditState::SampleEditState(State* state, uint8_t slot) : State(state), slot(slot), config(Playback.getConfig(slot)){
+SampleEditState::SampleEditState(State* parent, uint8_t slot) : State(parent), slot(slot), config(Playback.getConfig(slot)){
 
 	//TODO - staviti otvaranje rawSampleova u drugi thread, loading animacija?
 	SlotConfig defaultConfigs[5];
+	// // editSlot = new EditSlot(config, RamFile::open(rawSamples[((uint8_t)config.sample.type)]));
 	for(uint8_t i = 0; i < 5; i++){
 		defaultConfigs[i].sample.type = (Sample::Type)i;
 		defaultConfigs[i].slotIndex = i;
@@ -17,6 +19,12 @@ SampleEditState::SampleEditState(State* state, uint8_t slot) : State(state), slo
 	}
 	editSlot = new EditSlot(config, rawSamples[((uint8_t)config.sample.type)]);
 	Playback.edit(slot, editSlot);
+
+	setButtonHoldTime(Synthia.slotToBtn(slot), 500);
+}
+
+SampleEditState::~SampleEditState(){
+	delete editSlot;
 }
 
 void SampleEditState::onStart(){
@@ -24,11 +32,11 @@ void SampleEditState::onStart(){
 	Sliders.addListener(this);
 	Input::getInstance()->addListener(this);
 
-	setButtonHoldTime(slot, 800);
-
 	sampleVis.setMain();
 	sampleVis.push(config.sample.type);
 	RGBSlot.setColor(slot, MatrixPixel::Yellow);
+
+	LEDStrip.setRightFromCenter(config.speed);
 
 	//TODO - start rgb anim for track leds
 	//Synthia.TrackRGB.startAnimation()
@@ -52,8 +60,14 @@ void SampleEditState::buttonHeld(uint i){
 		first = false;
 		return;
 	}
-	if(i != slot)return;
 
+	int s = Synthia.btnToSlot(i);
+	if(s != slot) return;
+
+	Playback.block(slot);
+	Synthia.TrackMatrix.clear();
+	Synthia.TrackMatrix.push();
+	delay(1000); // TODO: deal with the race condition properly. can proceed only after Playback releases EditSlot
 	File file = RamFile::create();
 	SlotBaker baker(editSlot, file);
 	baker.start();
@@ -64,31 +78,44 @@ void SampleEditState::buttonHeld(uint i){
 }
 
 void SampleEditState::leftEncMove(int8_t amount){
-	int8_t sampleType = static_cast<int8_t>(config.sample.sample);
-	printf("left enc move amount: %d\n", amount);
-	//no wrapping allowed
+	int8_t type = static_cast<int8_t>(config.sample.type);
 
-	sampleType += amount;
-	if(sampleType < 0 || sampleType >= (int8_t) Sample::SampleType::SIZE) return;
+	if(!sampleVis.isStarted()){
+		sampleVis.push((Sample::Type) type);
+		return;
+	}
 
-	printf("sample: %d\n", sampleType);
-	editSlot->setSample((Sample::SampleType) sampleType, rawSamples[sampleType]);
-	Playback.play(slot);
-	sampleVis.push((Sample::SampleType) sampleType);
+	type += amount;
+	if(type < 0 || type >= (uint8_t) Sample::Type::SIZE) return;
 
-	/*if(sampleType == Sample::SampleType::RECORDING){
-		//TODO - go to recording state
-	}*/
+	config.sample.type = (Sample::Type) type;
+	if(config.sample.type != Sample::Type::RECORDING){
+		// TODO
+		editSlot->setSample((Sample::Type) type, RamFile::open(rawSamples[type]));
+	}
+	sampleVis.push((Sample::Type) type);
+
+	if((Sample::Type) type != Sample::Type::RECORDING){
+		Playback.play(slot);
+	}
+
+	// TODO - go to recording state
 }
 
 void SampleEditState::rightEncMove(int8_t amount){
-	//no wrapping allowed
-	if((amount < 0 && ((uint8_t)selectedEffect) == 0) || (amount > 0 && selectedEffect == EffectData::Type::COUNT)) return;
+	int8_t effect = (int8_t) selectedEffect;
 
-	selectedEffect = (EffectData::Type)(((uint8_t)selectedEffect) + amount);
-	effectVis.push(config.effects[(uint8_t)selectedEffect]);
-	Serial.printf("effect: %d\n", (uint8_t)selectedEffect);
+	if(!effectVis.isStarted()){
+		effectVis.push({ selectedEffect, config.effects[effect].intensity });
+		return;
+	}
 
+	effect += amount;
+	if(effect < 0 || effect >= (int8_t) EffectData::Type::COUNT) return;
+
+	selectedEffect = (EffectData::Type) effect;
+
+	effectVis.push({ selectedEffect, config.effects[effect].intensity });
 }
 
 void SampleEditState::leftPotMove(uint8_t value){
@@ -98,5 +125,6 @@ void SampleEditState::leftPotMove(uint8_t value){
 
 void SampleEditState::rightPotMove(uint8_t value){
 	editSlot->setEffect(selectedEffect, value);
-	effectVis.push(config.effects[(uint8_t)selectedEffect]);
+	config.effects[(size_t) selectedEffect].intensity = value;
+	effectVis.push(config.effects[(uint8_t) selectedEffect]);
 }

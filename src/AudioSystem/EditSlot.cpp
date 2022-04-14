@@ -6,11 +6,9 @@
 
 #include <utility>
 
-EditSlot::EditSlot(const SlotConfig& config, File file) : config(config), speeder(nullptr), effector(nullptr){
+EditSlot::EditSlot(const SlotConfig& config, File file) : config(config), speeder(nullptr), effector(nullptr), playback(new PlaybackSlot(std::move(file))){
 
-	playback = new PlaybackSlot(std::move(file));
-
-	speeder.setSource(&playback->getSource());
+	speeder.setSource(this);
 	effector.setSource(&speeder);
 
 	effects[0] = new LowPass();
@@ -33,7 +31,36 @@ EditSlot::~EditSlot(){
 	for(auto effect: effects){
 		delete effect;
 	}
-	delete playback;
+}
+
+size_t EditSlot::generate(int16_t* outBuffer){
+	queuedMutex.lock();
+	if(queued){
+		playback = std::move(queued);
+	}
+	queuedMutex.unlock();
+
+	if(playback == nullptr){
+		ESP_LOGE("EditSlot", "generate called, playback not set");
+		return 0;
+	}
+
+	return playback->getGenerator().generate(outBuffer);
+}
+
+int EditSlot::available(){
+	queuedMutex.lock();
+	if(queued){
+		playback = std::move(queued);
+	}
+	queuedMutex.unlock();
+
+	if(playback == nullptr){
+		ESP_LOGE("EditSlot", "available called, playback not set");
+		return 0;
+	}
+
+	return playback->getGenerator().available();
 }
 
 void EditSlot::setEffect(EffectData::Type type, uint8_t intensity){
@@ -41,7 +68,13 @@ void EditSlot::setEffect(EffectData::Type type, uint8_t intensity){
 		case EffectData::Type::COUNT:
 			return;
 		case EffectData::Type::VOLUME:
-			playback->getSource().setVolume(intensity);
+			queuedMutex.lock();
+			if(queued){
+				queued->getSource().setVolume(intensity);
+			}else if(playback){
+				playback->getSource().setVolume(intensity);
+			}
+			queuedMutex.unlock();
 			break;
 		default:
 			effects[uint8_t(type)]->setIntensity(intensity);
@@ -60,11 +93,11 @@ void EditSlot::setSample(Sample::Type type, File file){
 	//don't do anything if sample wasn't changed (except for recordings, which can be modified)
 	if(config.sample.type == type && type != Sample::Type::RECORDING) return;
 
-	config.sample.sample = sample;
-	delete playback;
+	config.sample.type = type;
 
-	playback = new PlaybackSlot(std::move(file));
-	speeder.setSource(&playback->getSource());
+	queuedMutex.lock();
+	queued.reset(new PlaybackSlot(std::move(file)));
+	queuedMutex.unlock();
 }
 
 Generator& EditSlot::getGenerator(){
@@ -72,7 +105,18 @@ Generator& EditSlot::getGenerator(){
 }
 
 void EditSlot::seek(size_t pos, SeekMode mode){
-	playback->seek(pos, mode);
+	if(playback == nullptr){
+		ESP_LOGE("EditSlot", "Seek called, playback not set");
+		return;
+	}
+
+	queuedMutex.lock();
+	if(queued){
+		queued->seek(pos, mode);
+	}else{
+		playback->seek(pos, mode);
+	}
+	queuedMutex.unlock();
 }
 
 SlotConfig EditSlot::getConfig(){
