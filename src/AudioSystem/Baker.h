@@ -15,12 +15,15 @@ public:
 	void start();
 	bool isDone();
 	void loop(uint micros) override;
+	std::array<File, 5> getFiles();
+	std::array<SlotConfig, 5> getConfigs();
 
 private:
 	std::array<SlotConfig, 5> configs;
-	SlotBaker* slotBakers[5];
-	File slotFiles[5];
-	EditSlot* editSlots[5];
+	SlotBaker* slotBakers[5] = { nullptr };
+	std::array<File, 5> slotFiles;
+	EditSlot* editSlots[5] = { nullptr };
+	uint8_t baked = 0;
 
 	Task task;
 
@@ -30,6 +33,7 @@ private:
 
 	void prepare();
 	void prepareSamples();
+	void cleanup();
 };
 
 

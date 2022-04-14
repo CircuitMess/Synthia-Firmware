@@ -11,7 +11,7 @@ static const char* TAG = "Intro";
 
 // TODO: anims
 const Intro::AnimMapping Intro::IntroAnims[5] = {
-		{ Synthia.TrackMatrix, "/Placeholder/Track.gif" },
+		{ Synthia.TrackMatrix, "/GIF/Intro/Track.gif" },
 		{ Synthia.CursorMatrix, "/Placeholder/Cursor.gif" },
 		{ Synthia.SlidersMatrix, "/Placeholder/Sliders.gif" },
 		{ Synthia.TrackRGB, "/Placeholder/TrackRGB.gif" },
@@ -34,13 +34,12 @@ void Intro::onStart(){
 		anims[i]->setMatrix(&IntroAnims[i].matrix);
 	}
 
-	for(int i = 0; i < 5; i++){
+	for(int i = 0; i < 1; i++){
 		anims[i]->start();
 	}
 
 	// TODO: first time data
 
-	std::array<SlotConfig, 5> configs;
 	for(int i = 0; i < 5; i++){
 		configs[i].sample.type = (Sample::Type) i;
 		configs[i].slotIndex = i;
@@ -95,7 +94,7 @@ void Intro::loop(uint micros){
 			}
 
 			// TODO: add loading animation
-			auto file = SPIFFS.open("/Loading.gif");
+			auto file = SPIFFS.open("/GIF/Loading.gif");
 			if(!file){
 				ESP_LOGE(TAG, "Can't open loading file");
 				return;
@@ -117,6 +116,11 @@ void Intro::loop(uint micros){
 }
 
 void Intro::launch(){
+	auto files = baker->getFiles();
+	for(int i = 0; i < 5; i++){
+		Playback.set(i, files[i], configs[i]);
+	}
+
 	stop();
 	delete this;
 
