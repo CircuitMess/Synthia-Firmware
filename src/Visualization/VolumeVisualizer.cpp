@@ -3,7 +3,7 @@
 #include <SPIFFS.h>
 #include "LEDStrip.h"
 
-VolumeVisualizer::VolumeVisualizer() : anim(SPIFFS.open("/Volume.gif")){
+VolumeVisualizer::VolumeVisualizer() : anim(SPIFFS.open("/GIF/Volume.gif")){
 	anim.setMatrix(&Synthia.TrackMatrix);
 }
 
