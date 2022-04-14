@@ -24,8 +24,7 @@ void State::push(State* parent){
 
 void State::pop(){
 	if(parent == nullptr) return;
-	State* parent = this->parent;
 	stop();
-	delete this;
 	parent->start();
+	delete this;
 }
