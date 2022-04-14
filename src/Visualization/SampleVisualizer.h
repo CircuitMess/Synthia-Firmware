@@ -5,7 +5,7 @@
 #include "../Model/Sample.hpp"
 #include <Devices/Matrix/MatrixAnimGIF.h>
 
-class SampleVisualizer : public Visualizer<Sample::SampleType>{
+class SampleVisualizer : public Visualizer<Sample::Type>{
 protected:
 public:
 	SampleVisualizer();
@@ -17,7 +17,7 @@ protected:
 	void onStop() override;
 
 private:
-	static const char* Anims[];
+	static const char* Anims[(size_t) Sample::Type::SIZE];
 	std::vector<std::unique_ptr<MatrixAnimGIF>> anims;
 
 };

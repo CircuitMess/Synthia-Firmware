@@ -1,6 +1,8 @@
 #include "SampleVisualizer.h"
+#include "LEDStrip.h"
 #include <Synthia.h>
 #include <SPIFFS.h>
+#include <FS/RamFile.h>
 
 const char* SampleVisualizer::Anims[] = {
 	"/GIF/Samples/Kick.gif",
@@ -12,13 +14,14 @@ const char* SampleVisualizer::Anims[] = {
 };
 
 SampleVisualizer::SampleVisualizer(){
-	for(int i = 0; i < 6; i++){
+	for(int i = 0; i < (size_t) Sample::Type::SIZE; i++){
 		File f = SPIFFS.open(Anims[i]);
 		if(!f){
 			ESP_LOGE("SampleVis", "Can't open %s", Anims[i]);
 			anims.clear();
 			return;
 		}
+		f = RamFile::open(f);
 
 		anims.emplace_back(new MatrixAnimGIF(f));
 		anims.back()->setMatrix(&Synthia.TrackMatrix);
@@ -28,10 +31,15 @@ SampleVisualizer::SampleVisualizer(){
 void SampleVisualizer::visualize(){
 	if(anims.empty()) return;
 
-	auto &matrix = Synthia.TrackMatrix;
-	matrix.stopAnimations();
-
 	uint8_t sample = (uint8_t) getProp();
+	for(int i = 0; i < anims.size(); i++){
+		if(anims[i]->isStarted()){
+			if(i == sample) return;
+			anims[i]->stop();
+			break;
+		}
+	}
+
 	anims[sample]->reset();
 	anims[sample]->start();
 }
