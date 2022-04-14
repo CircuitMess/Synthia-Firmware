@@ -9,7 +9,7 @@
 PlaybackState::PlaybackState(const TrackTimeline& timeline, uint8_t& tempo) : timeline(timeline), tempo(tempo){
 	setButtonHoldTime(BTN_ENC_L, 500);
 	for(int i = 0; i < 5; i++){
-		setButtonHoldTime(i, 500);
+		setButtonHoldTime(Synthia.slotToBtn(i), 500);
 	}
 }
 
