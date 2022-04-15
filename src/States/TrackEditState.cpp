@@ -158,6 +158,8 @@ void TrackEditState::buttonPressed(uint i){
 	}else{
 		if(clickTimes[slot] + doubleClickInterval >= millis()){
 			doubleClick(i);
+			clickTimes[slot] = 0;
+			return;
 		}else{
 			click(i);
 		}
