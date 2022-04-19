@@ -2,7 +2,7 @@
 #include <Settings.h>
 #include "JigHWTest.h"
 #include "SPIFFSChecksum.hpp"
-#include <Pins.hpp>
+#include <Synthia.h>
 #include "../AudioSystem/PlaybackSystem.h"
 #include <Wire.h>
 
@@ -11,8 +11,8 @@ JigHWTest *JigHWTest::test = nullptr;
 JigHWTest::JigHWTest(){
 	test = this;
 
-	tests.push_back({ JigHWTest::PSRAMTest, "LoRa", [](){}});
-	tests.push_back({ JigHWTest::IS31Test, "Battery", [](){}});
+	tests.push_back({ JigHWTest::PSRAMTest, "PSRAM", [](){}});
+	tests.push_back({ JigHWTest::IS31Test, "IS31 charlieplex", [](){}});
 	tests.push_back({JigHWTest::SPIFFSTest, "SPIFFS", [](){ }});
 }
 
@@ -21,18 +21,18 @@ void JigHWTest::start(){
 	Serial.printf("TEST:begin:%llx\n", ESP.getEfuseMac());
 
 	bool pass = true;
-	for(const Test &test : tests){
-		currentTest = test.name;
+	for(const Test &singleTest : tests){
+		currentTest = singleTest.name;
 
 		Serial.printf("TEST:startTest:%s\n", currentTest);
 
-		bool result = test.test();
+		bool result = singleTest.test();
 
 		Serial.printf("TEST:endTest:%s\n", result ? "pass" : "fail");
 
 		if(!(pass &= result)){
-			if(test.onFail){
-				test.onFail();
+			if(singleTest.onFail){
+				singleTest.onFail();
 			}
 
 			break;
@@ -46,16 +46,48 @@ void JigHWTest::start(){
 
 	Serial.println("TEST:passall");
 
-	Playback.set(0, SPIFFS.open("/Samples/intro.wav"), SlotConfig{});
+	Playback.begin();
+	Playback.setVolume(200);
+
+	//TODO - definirati koji sample će se puštati kad svi testovi passaju
+	Playback.set(0, SPIFFS.open("/Samples/clap.wav"), SlotConfig{});
+//	Playback.set(0, SPIFFS.open("/Samples/intro.wav"), SlotConfig{});
 	Playback.play(0);
 
+	Synthia.TrackMatrix.setBrightness(150);
+	Synthia.CursorMatrix.setBrightness(150);
+	Synthia.SlidersMatrix.setBrightness(150);
+	Synthia.SlotRGB.setBrightness(255);
+	Synthia.TrackRGB.setBrightness(255);
+
+	Synthia.TrackMatrix.clear(MatrixPixel::White);
+	Synthia.TrackMatrix.push();
+	Synthia.CursorMatrix.clear(MatrixPixel::White);
+	Synthia.CursorMatrix.push();
+	Synthia.SlidersMatrix.clear(MatrixPixel::White);
+	Synthia.SlidersMatrix.push();
+
 	for(;;){
-/*		LED.setRGB(LEDColor::RED);
+		Synthia.TrackRGB.clear(MatrixPixel::Red);
+		Synthia.TrackRGB.push();
+		Synthia.SlotRGB.clear(MatrixPixel::Red);
+		Synthia.SlotRGB.push();
+
 		delay(500);
-		LED.setRGB(LEDColor::GREEN);
+
+		Synthia.TrackRGB.clear(MatrixPixel::Green);
+		Synthia.TrackRGB.push();
+		Synthia.SlotRGB.clear(MatrixPixel::Green);
+		Synthia.SlotRGB.push();
+
 		delay(500);
-		LED.setRGB(LEDColor::BLUE);
-		delay(500);*/
+
+		Synthia.TrackRGB.clear(MatrixPixel::Blue);
+		Synthia.TrackRGB.push();
+		Synthia.SlotRGB.clear(MatrixPixel::Blue);
+		Synthia.SlotRGB.push();
+
+		delay(500);
 	}
 }
 
@@ -100,8 +132,8 @@ bool JigHWTest::IS31Test(){
 	Wire.beginTransmission(0x74);
 
 	if(Wire.endTransmission() != 0){
-		test->log("responding", false);
-		return;
+		test->log("response", false);
+		return false;
 	}
 	return true;
 }

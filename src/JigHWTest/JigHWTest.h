@@ -6,6 +6,7 @@
 #include <Input/Input.h>
 #include <FS.h>
 #include <Util/Task.h>
+#include <Devices/Matrix/MatrixPixel.h>
 
 struct Test {
 	bool (*test)();
