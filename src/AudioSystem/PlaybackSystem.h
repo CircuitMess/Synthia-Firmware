@@ -10,7 +10,7 @@
 
 struct AudioJob {
 	enum {
-		PLAY, SET
+		PLAY, SET, RELEASE
 	} type;
 	uint8_t slot;
 	SampleSlot* sampleSlot;
@@ -26,8 +26,11 @@ public:
 	void set(uint8_t slot, File file, const SlotConfig& config);
 	void edit(uint8_t slot, EditSlot* editSlot);
 	void block(uint8_t slot);
+	void release(uint8_t slot);
 	uint8_t getVolume() const;
 	void setVolume(uint8_t volume);
+
+	SampleSlot* getSlot(uint8_t slot);
 
 	const SlotConfig& getConfig(uint8_t slot);
 private:

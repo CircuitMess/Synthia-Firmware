@@ -8,7 +8,6 @@ SampleEditState::SampleEditState(State* parent, uint8_t slot) : State(parent), s
 
 	//TODO - staviti otvaranje rawSampleova u drugi thread, loading animacija?
 	SlotConfig defaultConfigs[5];
-	// // editSlot = new EditSlot(config, RamFile::open(rawSamples[((uint8_t)config.sample.type)]));
 	for(uint8_t i = 0; i < 5; i++){
 		defaultConfigs[i].sample.type = (Sample::Type)i;
 		defaultConfigs[i].slotIndex = i;
@@ -17,7 +16,7 @@ SampleEditState::SampleEditState(State* parent, uint8_t slot) : State(parent), s
 		rawSamples[i] = RamFile::open(file);
 		file.close();
 	}
-	editSlot = new EditSlot(config, rawSamples[((uint8_t)config.sample.type)]);
+	editSlot = new EditSlot(config, RamFile::open(rawSamples[((uint8_t)config.sample.type)]));
 	Playback.edit(slot, editSlot);
 
 	setButtonHoldTime(Synthia.slotToBtn(slot), 500);
@@ -64,14 +63,21 @@ void SampleEditState::buttonHeld(uint i){
 	int s = Synthia.btnToSlot(i);
 	if(s != slot) return;
 
-	Playback.block(slot);
+	// TODO: loading
 	Synthia.TrackMatrix.clear();
 	Synthia.TrackMatrix.push();
-	delay(1000); // TODO: deal with the race condition properly. can proceed only after Playback releases EditSlot
+
+	Playback.release(slot);
+	while(Playback.getSlot(slot) != nullptr){
+		delay(1);
+	}
+
 	File file = RamFile::create();
 	SlotBaker baker(editSlot, file);
 	baker.start();
-	while(!baker.isDone()) delay(1);
+	while(!baker.isDone()){
+		delay(1);
+	}
 	Playback.set(slot, file, config);
 
 	pop();
