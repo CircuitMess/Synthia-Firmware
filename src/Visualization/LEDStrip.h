@@ -18,6 +18,18 @@ public:
 	void setRight(uint8_t value);
 
 	/**
+	 * Turns on a single LED on the left slider LED strip
+	 * @param value Value to be represented on the strip
+	 */
+	void setLeftSingle(uint8_t value);
+
+	/**
+	 * Turns on a single LED on the right slider LED strip
+	 * @param value Value to be represented on the strip
+	 */
+	void setRightSingle(uint8_t value);
+
+	/**
 	 * Sets the fill for the 6th (cursor) row of LEDs, left to right
 	 * @param value Amount to be filled from left to right (0-255)
 	 */
@@ -38,6 +50,7 @@ public:
 
 private:
 	void setStrip(uint8_t value, uint8_t x);
+	void setStripSingle(uint8_t value, uint8_t x);
 
 };
 

@@ -11,6 +11,14 @@ void LEDStripImpl::setRight(uint8_t value){
 	setStrip(value, 1);
 }
 
+void LEDStripImpl::setLeftSingle(uint8_t value){
+	setStripSingle(value, 0);
+}
+
+void LEDStripImpl::setRightSingle(uint8_t value){
+	setStripSingle(value, 1);
+}
+
 void LEDStripImpl::setMidFill(uint8_t value){
 	Synthia.CursorMatrix.stopAnimations();
 	uint32_t fill = map(value, 0, 255, 0, 255 * 16);
@@ -54,6 +62,25 @@ void LEDStripImpl::setStrip(uint8_t value, uint8_t x){
 		}else if(fill > 0){
 			fill = 0;
 		}
+	}
+	Synthia.SlidersMatrix.push();
+}
+
+void LEDStripImpl::setStripSingle(uint8_t value, uint8_t x){
+	int32_t fill = map(value, 0, 255, 0, 255 * 7);
+
+	for(int i = 7; i >= 0; --i){
+		uint8_t pixelValue = 0;
+		if(fill < (i - 1) * 255 || fill >= (i + 1) * 255){
+			pixelValue = 0;
+		}else{
+			if(fill > i * 255){
+				pixelValue = (i + 1) * 255 - fill;
+			}else if(fill <= i * 255){
+				pixelValue = fill - (i - 1) * 255;
+			}
+		}
+		Synthia.SlidersMatrix.drawPixel(x, 7 - i, { 255, 255, 255, pixelValue });
 	}
 	Synthia.SlidersMatrix.push();
 }
