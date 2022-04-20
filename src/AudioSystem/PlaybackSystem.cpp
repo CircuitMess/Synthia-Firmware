@@ -5,7 +5,7 @@
 
 PlaybackSystem Playback;
 
-const i2s_config_t i2s_config = {
+static const i2s_config_t i2s_config = {
 		.mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_RX),
 		.sample_rate = SAMPLE_RATE,
 		.bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,

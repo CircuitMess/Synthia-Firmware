@@ -15,123 +15,123 @@ void RGBController::begin(Matrix* matrix){
 }
 
 void RGBController::setColor(uint8_t slot, MatrixPixel color){
+	if(slot >= 5) return;
+
 	slotColors[slot] = color;
-	if(state == Anim){
-		matrix->stopAnimations();
-		state = Single;
+
+	if(state == Single && slotStates[slot] == Solid){
 		matrix->drawPixel(slot, color);
 		matrix->push();
-	}else if(state == Single){
-		if(slotState[slot] == Continuous){
-			slotState[slot] = Solid;
-		}
-		matrix->drawPixel(slot, color);
-		pushNeeded = true;
 	}
-	//sets the resting color after a blink is done
 }
 
 void RGBController::clear(){
-	for(int i = 0; i < 5; ++i){
-		setColor(i, {0, 0, 0, 0});
+	if(state == Anim){
+		matrix->stopAnimations();
+		state = Single;
 	}
+
+	for(int i = 0; i < 5; ++i){
+		slotStates[i] = Solid;
+		blinkStates[i] = false;
+		blinkColors[i] = MatrixPixel::Off;
+		blinkStartTimes[i] = 0;
+
+		slotColors[i] = MatrixPixel::Off;
+		matrix->drawPixel(i, MatrixPixel::Off);
+	}
+
+	matrix->push();
 }
 
 void RGBController::blink(uint8_t slot, MatrixPixel color){
-	if(state == Anim){
-		matrix->stopAnimations();
-		state = Single;
-	}
+	if(slot >= 5) return;
+
+	if(state == Anim) return;
+
+	slotStates[slot] = Once;
+	blinkColors[slot] = color;
+	blinkStartTimes[slot] = millis();
+	blinkStates[slot] = true;
+
 	matrix->drawPixel(slot, color);
 	matrix->push();
-	slotState[slot] = Once;
-	blinkMicros[slot] = 0;
-	blinkState[slot] = true;
-	blinkColors[slot] = color;
 }
 
 void RGBController::blinkTwice(uint8_t slot, MatrixPixel color){
+	if(slot >= 5) return;
+
+	if(state == Anim) return;
+
+	blink(slot, color);
+	slotStates[slot] = Twice;
+}
+
+void RGBController::blinkAll(MatrixPixel color){
 	if(state == Anim){
 		matrix->stopAnimations();
 		state = Single;
 	}
-	matrix->drawPixel(slot, color);
-	matrix->push();
-	slotState[slot] = Twice;
-	blinkMicros[slot] = 0;
-	blinkState[slot] = true;
-	blinkColors[slot] = color;
-}
 
-void RGBController::blinkAll(MatrixPixel color){
 	for(int i = 0; i < 5; ++i){
 		blink(i, color);
 	}
 }
 
 void RGBController::blinkAllTwice(MatrixPixel color){
+	if(state == Anim){
+		matrix->stopAnimations();
+		state = Single;
+	}
+
 	for(int i = 0; i < 5; ++i){
 		blinkTwice(i, color);
 	}
 }
 
 void RGBController::blinkContinuous(uint8_t slot, MatrixPixel color){
-	if(state == Anim){
-		matrix->stopAnimations();
-		state = Single;
-	}
-	matrix->drawPixel(slot, color);
-	matrix->push();
-	slotState[slot] = Continuous;
-	blinkMicros[slot] = 0;
-	blinkState[slot] = true;
-	blinkColors[slot] = color;
+	if(state == Anim) return;
+
+	blink(slot, color);
+	slotStates[slot] = Continuous;
 }
 
 void RGBController::loop(uint micros){
 	if(state == Anim) return;
 
-	bool blinkPushNeeded = false;
+	bool push = false;
+	for(int i = 0; i < 5; i++){
+		if(slotStates[i] == Solid) continue;
+		if(millis() - blinkStartTimes[i] < blinkDuration) continue;
 
-	for(int i = 0; i < 5; ++i){
-
-		if(slotState[i] == Solid) continue;
-
-		blinkMicros[i] += micros;
-		if(blinkMicros[i] < blinkTime*1000) continue;
-
-		blinkPushNeeded = true;
-		blinkMicros[i] = 0;
-
-		if(slotState[i] == Once){
-			if(blinkState[i]){
-				matrix->drawPixel(i, {0, 0, 0, 0});
-				blinkState[i] = false;
-			}else{
-				slotState[i] = Solid;
-				matrix->drawPixel(i, slotColors[i]);
-			}
-		}else if(slotState[i] == Twice){
-			if(blinkState[i]){
-				matrix->drawPixel(i, {0, 0, 0, 0});
-				blinkState[i] = false;
-			}else{
-				blink(i, blinkColors[i]);
-			}
-		}else if(slotState[i] == Continuous){
-			if(blinkState[i]){
-				matrix->drawPixel(i, {0, 0, 0, 0});
-				blinkState[i] = false;
-			}else{
-				matrix->drawPixel(i, blinkColors[i]);
-				blinkState[i] = true;
-			}
+		if(slotStates[i] == Continuous){
+			blinkStates[i] = !blinkStates[i];
+			blinkStartTimes[i] = millis();
+			matrix->drawPixel(i, blinkStates[i] ? blinkColors[i] : MatrixPixel::Off);
+			push = true;
+		}else if(slotStates[i] == Twice && blinkStates[i]){
+			blinkStates[i] = false;
+			blinkStartTimes[i] = millis();
+			matrix->drawPixel(i, MatrixPixel::Off);
+			push = true;
+		}else if(slotStates[i] == Twice && !blinkStates[i]){
+			blinkStates[i] = true;
+			blinkStartTimes[i] = millis();
+			slotStates[i] = Once;
+			matrix->drawPixel(i, blinkColors[i]);
+			push = true;
+		}else if(slotStates[i] == Once){
+			blinkStates[i] = false;
+			blinkStartTimes[i] = 0;
+			blinkColors[i] = MatrixPixel::Off;
+			slotStates[i] = Solid;
+			matrix->drawPixel(i, slotColors[i]);
+			push = true;
 		}
 	}
 
-	if(blinkPushNeeded || pushNeeded){
+	if(push){
 		matrix->push();
-		pushNeeded = false;
 	}
 }
 
