@@ -13,6 +13,7 @@ class Baker : public LoopListener {
 public:
 	Baker(const std::array<SlotConfig, 5>& configs);
 	void start();
+	bool isBaking();
 	bool isDone();
 	void loop(uint micros) override;
 

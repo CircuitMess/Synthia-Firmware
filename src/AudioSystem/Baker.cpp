@@ -66,6 +66,10 @@ void Baker::prepare(){
 	state = BAKING;
 }
 
+bool Baker::isBaking(){
+	return state == BAKING || state == PREPARING;
+}
+
 bool Baker::isDone(){
 	return state == DONE;
 }

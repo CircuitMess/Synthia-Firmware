@@ -9,19 +9,23 @@
 #include "../AudioSystem/Baker.h"
 #include <memory>
 #include <Devices/Matrix/MatrixAnimGIF.h>
+#include <Audio/OutputI2S.h>
+#include <Audio/SourceAAC.h>
 
 class Intro : public State, public LoopListener {
+public:
+	Intro();
+	void loop(uint micros) override;
+
 protected:
 	void onStart() override;
 	void onStop() override;
-
-public:
-	void loop(uint micros) override;
 
 private:
 	struct AnimMapping {
 		Matrix& matrix;
 		const char* filename;
+		bool loop;
 	};
 	static const AnimMapping IntroAnims[5];
 
@@ -30,6 +34,11 @@ private:
 	std::unique_ptr<MatrixAnimGIF> loadingAnim;
 
 	bool introAnimDone = false;
+
+	File audioFile;
+	FileDataSource fileSource;
+	SourceAAC source;
+	OutputI2S output;
 
 	void launch();
 };
