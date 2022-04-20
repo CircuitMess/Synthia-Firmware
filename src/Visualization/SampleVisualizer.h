@@ -5,7 +5,12 @@
 #include "../Model/Sample.hpp"
 #include <Devices/Matrix/MatrixAnimGIF.h>
 
-class SampleVisualizer : public Visualizer<Sample::Type>{
+struct SampleVisData {
+	Sample::Type type;
+	bool recorded;
+};
+
+class SampleVisualizer : public Visualizer<SampleVisData>{
 protected:
 public:
 	SampleVisualizer();
@@ -17,7 +22,7 @@ protected:
 	void onStop() override;
 
 private:
-	static const char* Anims[(size_t) Sample::Type::SIZE];
+	static const char* Anims[(size_t) Sample::Type::SIZE + 1];
 	std::vector<std::unique_ptr<MatrixAnimGIF>> anims;
 
 };

@@ -6,12 +6,16 @@
 #include "../Visualization/EffectVisualizer.h"
 #include "../Visualization/SampleSpeedVisualizer.h"
 #include <Synthia.h>
+#include <JPEGDecoder.h>
 #include "../AudioSystem/EditSlot.h"
+#include "../AudioSystem/Recorder.h"
 
-class SampleEditState : public State, public InputListener, public EncoderListener, public SliderListener {
+class SampleEditState : public State, public InputListener, public EncoderListener, public SliderListener, public LoopListener {
 public:
 	SampleEditState(State* parent, uint8_t slot);
 	virtual ~SampleEditState();
+
+	void loop(uint micros) override;
 
 protected:
 	void onStart() override;
@@ -23,6 +27,8 @@ private:
 	void rightEncMove(int8_t amount) override;
 	void leftPotMove(uint8_t value) override;
 	void rightPotMove(uint8_t value) override;
+	void buttonReleased(uint i) override;
+	void buttonPressed(uint i) override;
 
 	uint8_t slot = 0;
 	EditSlot *editSlot = nullptr;
@@ -30,6 +36,7 @@ private:
 	SampleVisualizer sampleVis;
 	EffectVisualizer effectVis;
 	SampleSpeedVisualizer speedVis;
+	Recorder* recorder = nullptr;
 
 	EffectData::Type selectedEffect = EffectData::Type::VOLUME;
 
