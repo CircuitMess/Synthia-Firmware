@@ -114,3 +114,7 @@ void PlaybackSystem::setVolume(uint8_t volume){
 
 	output.setGain(gain);
 }
+
+bool PlaybackSystem::isPlaying(){
+	return output.isRunning();
+}

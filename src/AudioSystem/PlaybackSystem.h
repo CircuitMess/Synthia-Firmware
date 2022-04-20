@@ -30,6 +30,8 @@ public:
 	void setVolume(uint8_t volume);
 
 	const SlotConfig& getConfig(uint8_t slot);
+
+	bool isPlaying();
 private:
 	Mixer mixer;
 	OutputI2S output;
