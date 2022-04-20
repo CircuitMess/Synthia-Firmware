@@ -90,12 +90,9 @@ void PlaybackSystem::processJob(AudioJob &job){
 			output.start();
 			break;
 		case AudioJob::SET:
-			// TODO: only block should set to nullptr. used to remove the slot without deleting it
-			if(job.sampleSlot != nullptr){
-				delete slots[job.slot];
-			}
-			mixer.setSource(job.slot, job.sampleSlot ? &job.sampleSlot->getGenerator() : nullptr);
+			delete slots[job.slot];
 			slots[job.slot] = job.sampleSlot;
+			mixer.setSource(job.slot, job.sampleSlot ? &job.sampleSlot->getGenerator() : nullptr);
 			break;
 	}
 }

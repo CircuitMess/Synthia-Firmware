@@ -7,8 +7,7 @@
 #include <utility>
 
 EditSlot::EditSlot(const SlotConfig& config, File file) : config(config), speeder(nullptr), effector(nullptr), playback(new PlaybackSlot(std::move(file))){
-
-	speeder.setSource(this);
+	speeder.setSource(&playback->getGenerator());
 	effector.setSource(&speeder);
 
 	effects[0] = new LowPass();
@@ -33,48 +32,12 @@ EditSlot::~EditSlot(){
 	}
 }
 
-size_t EditSlot::generate(int16_t* outBuffer){
-	queuedMutex.lock();
-	if(queued){
-		playback = std::move(queued);
-	}
-	queuedMutex.unlock();
-
-	if(playback == nullptr){
-		ESP_LOGE("EditSlot", "generate called, playback not set");
-		return 0;
-	}
-
-	return playback->getGenerator().generate(outBuffer);
-}
-
-int EditSlot::available(){
-	queuedMutex.lock();
-	if(queued){
-		playback = std::move(queued);
-	}
-	queuedMutex.unlock();
-
-	if(playback == nullptr){
-		ESP_LOGE("EditSlot", "available called, playback not set");
-		return 0;
-	}
-
-	return playback->getGenerator().available();
-}
-
 void EditSlot::setEffect(EffectData::Type type, uint8_t intensity){
 	switch(type){
 		case EffectData::Type::COUNT:
 			return;
 		case EffectData::Type::VOLUME:
-			queuedMutex.lock();
-			if(queued){
-				queued->getSource().setVolume(intensity);
-			}else if(playback){
-				playback->getSource().setVolume(intensity);
-			}
-			queuedMutex.unlock();
+			playback->getSource().setVolume(intensity);
 			break;
 		default:
 			effects[uint8_t(type)]->setIntensity(intensity);
@@ -89,34 +52,12 @@ void EditSlot::setSpeed(uint8_t speed){
 	config.speed = speed;
 }
 
-void EditSlot::setSample(Sample::Type type, File file){
-	//don't do anything if sample wasn't changed (except for recordings, which can be modified)
-	if(config.sample.type == type && type != Sample::Type::RECORDING) return;
-
-	config.sample.type = type;
-
-	queuedMutex.lock();
-	queued.reset(new PlaybackSlot(std::move(file)));
-	queuedMutex.unlock();
-}
-
 Generator& EditSlot::getGenerator(){
 	return effector;
 }
 
 void EditSlot::seek(size_t pos, SeekMode mode){
-	if(playback == nullptr){
-		ESP_LOGE("EditSlot", "Seek called, playback not set");
-		return;
-	}
-
-	queuedMutex.lock();
-	if(queued){
-		queued->seek(pos, mode);
-	}else{
-		playback->seek(pos, mode);
-	}
-	queuedMutex.unlock();
+	playback->seek(pos, mode);
 }
 
 SlotConfig EditSlot::getConfig(){

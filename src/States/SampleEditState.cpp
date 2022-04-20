@@ -82,6 +82,9 @@ void SampleEditState::leftEncMove(int8_t amount){
 
 	if(!sampleVis.isStarted()){
 		sampleVis.push((Sample::Type) type);
+		if((Sample::Type) type != Sample::Type::RECORDING){
+			Playback.play(slot);
+		}
 		return;
 	}
 
@@ -90,8 +93,8 @@ void SampleEditState::leftEncMove(int8_t amount){
 
 	config.sample.type = (Sample::Type) type;
 	if(config.sample.type != Sample::Type::RECORDING){
-		// TODO
-		editSlot->setSample((Sample::Type) type, RamFile::open(rawSamples[type]));
+		editSlot = new EditSlot(config, RamFile::open(rawSamples[type]));
+		Playback.edit(slot, editSlot);
 	}
 	sampleVis.push((Sample::Type) type);
 
