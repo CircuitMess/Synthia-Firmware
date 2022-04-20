@@ -44,16 +44,16 @@ void Recorder::start(){
 
 void Recorder::recordFunc(){
 	esp_err_t err;
-	if((err = i2s_driver_install(I2S_NUM_0, &recconfig, 0, NULL)) != ESP_OK){
+	if((err = i2s_driver_install(I2S_NUM_1, &recconfig, 0, NULL)) != ESP_OK){
 		ESP_LOGE(TAG, "Failed installing I2S driver: %d ", err);
 
 		state = WAITING;
 		return;
 	}
-	if((err = i2s_set_pin(I2S_NUM_0, &i2s_pin_config)) != ESP_OK){
+	if((err = i2s_set_pin(I2S_NUM_1, &i2s_pin_config)) != ESP_OK){
 		ESP_LOGE(TAG, "Failed setting I2S pin: %d ", err);
 
-		if((err = i2s_driver_uninstall(I2S_NUM_0)) != ESP_OK){
+		if((err = i2s_driver_uninstall(I2S_NUM_1)) != ESP_OK){
 			ESP_LOGE(TAG, "Failed uninstalling I2S driver: %d ", err);
 		}
 
@@ -65,10 +65,15 @@ void Recorder::recordFunc(){
 		if(state != RECORDING) break;
 
 		size_t readSize;
-		i2s_read(I2S_NUM_0, i2sBuffer, i2sBufferSize, &readSize, portMAX_DELAY);
+		i2s_read(I2S_NUM_1, i2sBuffer, i2sBufferSize, &readSize, portMAX_DELAY);
 
 		for(int j = 0; j < i2sBufferSize; j += 4){
 			int16_t sample = *(int16_t*)(&i2sBuffer[j + 2]);
+			sample *= 2;
+
+			if(sampleCount <= BUFFER_SAMPLES * 2){
+				sample = (float) sample * pow((float) sampleCount / ((float) BUFFER_SAMPLES * 2.0f), 2);
+			}
 
 			wavBuffer[sampleCount] = sample;
 			sampleCount++;
@@ -79,7 +84,7 @@ void Recorder::recordFunc(){
 		if(sampleCount >= maxSamples) break;
 	}
 
-	if((err = i2s_driver_uninstall(I2S_NUM_0)) != ESP_OK){
+	if((err = i2s_driver_uninstall(I2S_NUM_1)) != ESP_OK){
 		ESP_LOGE(TAG, "Failed installing I2S driver: %d ", err);
 	}
 
@@ -111,6 +116,10 @@ bool Recorder::isRecording(){
 
 bool Recorder::isRecorded(){
 	return state == DONE;
+}
+
+float Recorder::getProgress(){
+	return (float) sampleCount / (float) maxSamples;
 }
 
 void Recorder::writeHeaderWAV(File& file, size_t size){
