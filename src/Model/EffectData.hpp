@@ -5,7 +5,7 @@
 
 struct EffectData {
 	enum class Type : uint8_t {
-		LOWPASS, HIGHPASS, REVERB, BITCRUSHER, VOLUME, COUNT
+		VOLUME, BITCRUSHER, REVERB, LOWPASS, HIGHPASS, COUNT
 	} type;
 	uint8_t intensity;
 };

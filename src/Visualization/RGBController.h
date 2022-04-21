@@ -31,19 +31,16 @@ private:
 
 	enum {
 		Solid, Once, Twice, Continuous
-	} slotState[5] = {Solid, Solid, Solid, Solid, Solid};
+	} slotStates[5] = { Solid };
 
-	MatrixPixel slotColors[5] = {{0, 0, 0, 0},
-								 {0, 0, 0, 0},
-								 {0, 0, 0, 0},
-								 {0, 0, 0, 0},
-								 {0, 0, 0, 0}};
-	MatrixPixel blinkColors[5];
-	uint32_t blinkMicros[5] = {0};
-	bool blinkState[5] = {false, false, false, false, false};
-	const uint32_t blinkTime = 200; //[ms]
+	MatrixPixel slotColors[5] = { MatrixPixel::Off };
 
-	bool pushNeeded = false;
+	MatrixPixel blinkColors[5] = { MatrixPixel::Off };
+	uint32_t blinkStartTimes[5] = { 0 };
+	bool blinkStates[5] = { false };
+	const uint32_t blinkDuration = 100; //[ms]
+	const uint32_t blinkContinuousDuration = 500; //[ms]
+
 };
 
 extern RGBController RGBTrack;
