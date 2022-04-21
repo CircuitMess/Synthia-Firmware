@@ -11,7 +11,7 @@ public:
 	void play(uint8_t slot); //blue pulse
 
 private:
-	bool enabled = true;
+	bool enabled = false;
 	void buttonPressed(uint id) override;
 
 	void playOnInput(uint8_t slot); //green pulse

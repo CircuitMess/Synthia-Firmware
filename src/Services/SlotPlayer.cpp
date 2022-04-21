@@ -43,6 +43,7 @@ void SlotPlayer::disable(){
 void SlotPlayer::play(uint8_t slot){
 	Playback.play(slot);
 	RGBSlot.blink(slot, {0, 0, 255, 255});
+	RGBTrack.blink(slot, {0, 0, 255, 255});
 }
 
 void SlotPlayer::playOnInput(uint8_t slot){
