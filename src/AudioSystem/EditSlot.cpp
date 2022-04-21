@@ -6,17 +6,15 @@
 
 #include <utility>
 
-EditSlot::EditSlot(const SlotConfig& config, File file) : config(config), speeder(nullptr), effector(nullptr){
-
-	playback = new PlaybackSlot(std::move(file));
-
-	speeder.setSource(&playback->getSource());
+EditSlot::EditSlot(const SlotConfig& config, File file) : config(config), speeder(nullptr), effector(nullptr), playback(new PlaybackSlot(std::move(file))){
+	speeder.setSource(&playback->getGenerator());
 	effector.setSource(&speeder);
 
-	effects[0] = new LowPass();
-	effects[1] = new HighPass();
-	effects[2] = new Reverb();
-	effects[3] = new BitCrusher();
+	effects[0] = new BitCrusher();
+	effects[1] = new Reverb();
+	effects[2] = new LowPass();
+	effects[3] = new HighPass();
+
 
 	for(auto& effect : effects){
 		effector.addEffect(effect);
@@ -33,7 +31,6 @@ EditSlot::~EditSlot(){
 	for(auto effect: effects){
 		delete effect;
 	}
-	delete playback;
 }
 
 void EditSlot::setEffect(EffectData::Type type, uint8_t intensity){
@@ -44,7 +41,7 @@ void EditSlot::setEffect(EffectData::Type type, uint8_t intensity){
 			playback->getSource().setVolume(intensity);
 			break;
 		default:
-			effects[uint8_t(type)]->setIntensity(intensity);
+			effects[(uint8_t) type - 1]->setIntensity(intensity);
 			break;
 	}
 
@@ -54,17 +51,6 @@ void EditSlot::setEffect(EffectData::Type type, uint8_t intensity){
 void EditSlot::setSpeed(uint8_t speed){
 	speeder.setModifier(speed);
 	config.speed = speed;
-}
-
-void EditSlot::setSample(const Sample& sample, File file){
-	//don't do anything if sample wasn't changed (except for recordings, which can be modified)
-	if(config.sample.sample == sample.sample && sample.sample != Sample::SampleType::RECORDING) return;
-
-	config.sample = sample;
-	delete playback;
-
-	playback = new PlaybackSlot(std::move(file));
-	speeder.setSource(&playback->getSource());
 }
 
 Generator& EditSlot::getGenerator(){

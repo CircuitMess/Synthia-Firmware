@@ -19,6 +19,10 @@ void VisualizerBase::setMain(){
 	VMan.setMain(this);
 }
 
+bool VisualizerBase::isStarted(){
+	return started;
+}
+
 void VisualizerBase::push(){
 	VMan.pushing(this);
 	visualize();
