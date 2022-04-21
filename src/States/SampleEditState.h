@@ -38,6 +38,8 @@ private:
 	SampleSpeedVisualizer speedVis;
 	Recorder* recorder = nullptr;
 
+	Task* load;
+
 	EffectData::Type selectedEffect = EffectData::Type::VOLUME;
 
 	File rawSamples[5];

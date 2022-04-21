@@ -8,34 +8,56 @@
 SampleEditState::SampleEditState(State* parent, uint8_t slot) : State(parent), slot(slot), config(Playback.getConfig(slot)){
 	config.sample.fileIndex = config.slotIndex = slot;
 
-	//TODO - staviti otvaranje rawSampleova u drugi thread, loading animacija?
-	SlotConfig defaultConfigs[5];
-	for(uint8_t i = 0; i < 5; i++){
-		defaultConfigs[i].sample.type = (Sample::Type)i;
-		defaultConfigs[i].slotIndex = defaultConfigs[i].sample.fileIndex = i;
+	load = new Task("SampleEdit-Load", [](Task* task){
+		SampleEditState* state = static_cast<SampleEditState*>(task->arg);
 
-		File file = openSample(defaultConfigs[i]);
-		rawSamples[i] = RamFile::open(file);
-		file.close();
-	}
+		SlotConfig defaultConfigs[5];
+		for(uint8_t i = 0; i < 5; i++){
+			defaultConfigs[i].sample.type = (Sample::Type)i;
+			defaultConfigs[i].slotIndex = defaultConfigs[i].sample.fileIndex = i;
 
-	if(config.sample.type == Sample::Type::RECORDING){
-		File f = openSample(config);
-		editSlot = new EditSlot(config, RamFile::open(f));
-	}else{
-		editSlot = new EditSlot(config, RamFile::open(rawSamples[((uint8_t)config.sample.type)]));
-	}
+			File file = openSample(defaultConfigs[i]);
+			state->rawSamples[i] = RamFile::open(file);
+			file.close();
+		}
 
-	Playback.edit(slot, editSlot);
+		if(state->editSlot){
+			Playback.release(state->slot);
+			while(Playback.getSlot(state->slot)){
+				delay(1);
+			}
+		}
+
+		if(state->config.sample.type == Sample::Type::RECORDING){
+			File f = openSample(state->config);
+			state->editSlot = new EditSlot(state->config, RamFile::open(f));
+		}else{
+			state->editSlot = new EditSlot(state->config, RamFile::open(state->rawSamples[((uint8_t)state->config.sample.type)]));
+		}
+	}, 2048, this);
 
 	setButtonHoldTime(Synthia.slotToBtn(slot), 500);
 }
 
 SampleEditState::~SampleEditState(){
 	delete editSlot;
+	load->stop(true);
+	delete load;
 }
 
 void SampleEditState::onStart(){
+	load->start(1, 0);
+	MatrixAnimGIF intro(SPIFFS.open("/GIF/SampleEdit.gif"), &Synthia.TrackMatrix);
+	intro.getGIF().setLoopMode(GIF::SINGLE);
+	intro.start();
+	while(load->running || intro.isStarted()){
+		intro.loop(0);
+	}
+
+
+	Playback.edit(slot, editSlot);
+
+
 	Encoders.addListener(this);
 	Sliders.addListener(this);
 	Input::getInstance()->addListener(this);
@@ -60,6 +82,13 @@ void SampleEditState::onStop(){
 
 	VMan.clearMain();
 
+	if(editSlot){
+		Playback.release(slot);
+		while(Playback.getSlot(slot)){
+			delay(1);
+		}
+	}
+
 	Synthia.TrackMatrix.clear();
 	Synthia.TrackMatrix.push();
 	LEDStrip.setMidFill(0);
@@ -79,18 +108,34 @@ void SampleEditState::buttonHeld(uint i){
 	Synthia.TrackMatrix.clear();
 	Synthia.TrackMatrix.push();
 
-	Playback.release(slot);
-	while(Playback.getSlot(slot) != nullptr){
-		delay(1);
+	Task bake("SampleEdit-Bake", [](Task* task){
+		SampleEditState* state = static_cast<SampleEditState*>(task->arg);
+
+		Playback.release(state->slot);
+		while(Playback.getSlot(state->slot) != nullptr){
+			delay(1);
+		}
+
+		File file = RamFile::create();
+		SlotBaker baker(state->editSlot, file);
+		baker.start();
+		while(!baker.isDone()){
+			delay(1);
+		}
+
+		Playback.set(state->slot, file, state->config);
+	}, 2048, this);
+	bake.start(1, 0);
+
+	MatrixAnimGIF outro(SPIFFS.open("/GIF/TrackEdit.gif"), &Synthia.TrackMatrix);
+	outro.getGIF().setLoopMode(GIF::SINGLE);
+	outro.start();
+	while(bake.running || outro.isStarted()){
+		outro.loop(0);
 	}
 
-	File file = RamFile::create();
-	SlotBaker baker(editSlot, file);
-	baker.start();
-	while(!baker.isDone()){
-		delay(1);
-	}
-	Playback.set(slot, file, config);
+	delete editSlot;
+	editSlot = nullptr;
 
 	pop();
 }
