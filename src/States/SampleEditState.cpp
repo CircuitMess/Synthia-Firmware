@@ -59,6 +59,12 @@ void SampleEditState::onStop(){
 	//TODO - stop rgb anim for track leds
 
 	VMan.clearMain();
+
+	Synthia.TrackMatrix.clear();
+	Synthia.TrackMatrix.push();
+	LEDStrip.setMidFill(0);
+	LEDStrip.setRight(0);
+	LEDStrip.setLeft(0);
 }
 
 void SampleEditState::buttonHeld(uint i){

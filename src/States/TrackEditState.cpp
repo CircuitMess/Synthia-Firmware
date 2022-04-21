@@ -1,4 +1,3 @@
-#include <cstdlib>
 #include "TrackEditState.h"
 #include "../Visualization/LEDStrip.h"
 #include "../AudioSystem/PlaybackSystem.h"
@@ -43,6 +42,12 @@ void TrackEditState::onStop(){
 	Encoders.removeListener(this);
 	Sliders.removeListener(this);
 	VMan.clearMain();
+
+	Synthia.TrackMatrix.clear();
+	Synthia.TrackMatrix.push();
+	LEDStrip.setMidFill(0);
+	LEDStrip.setRight(0);
+	LEDStrip.setLeft(0);
 }
 
 void TrackEditState::setTrack(Track track){
