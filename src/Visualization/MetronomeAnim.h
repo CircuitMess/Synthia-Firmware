@@ -15,6 +15,7 @@ public:
 	uint8_t getTempo() const;
 
 	void loop(uint micros) override;
+	void push() override;
 
 protected:
 	void onStart() override;

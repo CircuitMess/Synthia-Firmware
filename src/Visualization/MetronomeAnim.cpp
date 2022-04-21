@@ -20,14 +20,14 @@ void MetronomeAnim::loop(uint micros){
 	uint32_t currentStep = (int) floor((float) (millis() - startTime) / stepTime) % steps;
 	if(currentStep != step){
 		step = currentStep;
-		drawLine();
+		push();
 	}
 }
 
 void MetronomeAnim::onStart(){
 	LoopManager::addListener(this);
 	startTime = millis();
-	drawLine();
+	push();
 }
 
 void MetronomeAnim::onStop(){
@@ -57,7 +57,7 @@ void MetronomeAnim::setTempo(uint8_t tempo){
 	startTime = round((float) millis() - (float) step * stepTime - (float) diff);
 }
 
-void MetronomeAnim::drawLine(){
+void MetronomeAnim::push(){
 	clear();
 
 	int x0 = startPoint.first;
@@ -77,7 +77,7 @@ void MetronomeAnim::drawLine(){
 		if (e2 <= dx) { err += dx; y0 += sy; } /* e_xy+e_y < 0 */
 	}
 
-	push();
+	pushMatrix();
 }
 
 void MetronomeAnim::reset(){
@@ -87,6 +87,4 @@ void MetronomeAnim::reset(){
 uint8_t MetronomeAnim::getTempo() const{
 	return tempo;
 }
-
-
 
