@@ -105,6 +105,8 @@ void RGBController::loop(uint micros){
 		if(millis() - blinkStartTimes[i] < blinkDuration) continue;
 
 		if(slotStates[i] == Continuous){
+			if(millis() - blinkStartTimes[i] < blinkContinuousDuration) continue;
+
 			blinkStates[i] = !blinkStates[i];
 			blinkStartTimes[i] = millis();
 			matrix->drawPixel(i, blinkStates[i] ? blinkColors[i] : MatrixPixel::Off);

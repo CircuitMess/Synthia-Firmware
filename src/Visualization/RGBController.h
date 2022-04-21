@@ -38,7 +38,8 @@ private:
 	MatrixPixel blinkColors[5] = { MatrixPixel::Off };
 	uint32_t blinkStartTimes[5] = { 0 };
 	bool blinkStates[5] = { false };
-	const uint32_t blinkDuration = 500; //[ms]
+	const uint32_t blinkDuration = 100; //[ms]
+	const uint32_t blinkContinuousDuration = 500; //[ms]
 
 };
 
