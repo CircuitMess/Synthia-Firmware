@@ -10,10 +10,11 @@ EditSlot::EditSlot(const SlotConfig& config, File file) : config(config), speede
 	speeder.setSource(&playback->getGenerator());
 	effector.setSource(&speeder);
 
-	effects[0] = new LowPass();
-	effects[1] = new HighPass();
-	effects[2] = new Reverb();
-	effects[3] = new BitCrusher();
+	effects[0] = new BitCrusher();
+	effects[1] = new Reverb();
+	effects[2] = new LowPass();
+	effects[3] = new HighPass();
+
 
 	for(auto& effect : effects){
 		effector.addEffect(effect);
@@ -40,7 +41,7 @@ void EditSlot::setEffect(EffectData::Type type, uint8_t intensity){
 			playback->getSource().setVolume(intensity);
 			break;
 		default:
-			effects[uint8_t(type)]->setIntensity(intensity);
+			effects[(uint8_t) type - 1]->setIntensity(intensity);
 			break;
 	}
 

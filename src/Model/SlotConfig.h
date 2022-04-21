@@ -6,11 +6,11 @@
 
 struct SlotConfig {
 	EffectData effects[(uint8_t)EffectData::Type::COUNT] = {
-			{EffectData::Type::LOWPASS, 0},
-			{EffectData::Type::HIGHPASS, 0},
-			{EffectData::Type::REVERB, 0},
+			{EffectData::Type::VOLUME, 255},
 			{EffectData::Type::BITCRUSHER, 0},
-			{EffectData::Type::VOLUME, 255}
+			{EffectData::Type::REVERB, 0},
+			{EffectData::Type::LOWPASS, 0},
+			{EffectData::Type::HIGHPASS, 0}
 	};
 	Sample sample;
 	uint8_t slotIndex = 0;

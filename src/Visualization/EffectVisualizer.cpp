@@ -5,11 +5,11 @@
 #include <FS/RamFile.h>
 
 const char* EffectVisualizer::Anims[] = {
+		"/GIF/Volume.gif",
+		"/GIF/Effects/BitCrush.gif",
+		"/GIF/Effects/Reverb.gif",
 		"/GIF/Effects/LowPass.gif",
 		"/GIF/Effects/HighPass.gif",
-		"/GIF/Effects/Reverb.gif",
-		"/GIF/Effects/BitCrush.gif",
-		"/GIF/Volume.gif",
 };
 
 EffectVisualizer::EffectVisualizer(){
