@@ -29,6 +29,7 @@ private:
 	};
 	static const AnimMapping IntroAnims[5];
 
+	std::array<SlotConfig, 5> configs;
 	std::unique_ptr<Baker> baker;
 	std::array<std::unique_ptr<MatrixAnimGIF>, 5> anims;
 	std::unique_ptr<MatrixAnimGIF> loadingAnim;

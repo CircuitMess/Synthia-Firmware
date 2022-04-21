@@ -42,6 +42,13 @@ void PlaybackSystem::block(uint8_t slot){
 	jobs.send(&job);
 }
 
+void PlaybackSystem::release(uint8_t slot){
+	if(!task.running) return;
+
+	AudioJob job { AudioJob::RELEASE, slot, nullptr };
+	jobs.send(&job);
+}
+
 void PlaybackSystem::play(uint8_t slot){
 	if(!task.running) return;
 
@@ -65,11 +72,15 @@ void PlaybackSystem::edit(uint8_t slot, EditSlot* editSlot){
 	jobs.send(&job);
 }
 
+SampleSlot* PlaybackSystem::getSlot(uint8_t slot){
+	return slots[slot];
+}
+
 void PlaybackSystem::taskFunc(Task* task){
 	auto* system = static_cast<PlaybackSystem*>(task->arg);
 
 	while(task->running){
-		if(system->jobs.count()){
+		while(system->jobs.count()){
 			AudioJob job;
 			if(!system->jobs.receive(&job)) continue;
 			system->processJob(job);
@@ -89,13 +100,14 @@ void PlaybackSystem::processJob(AudioJob &job){
 			}
 			output.start();
 			break;
+		case AudioJob::RELEASE:
+			slots[job.slot] = nullptr;
+			mixer.setSource(job.slot, nullptr);
+			break;
 		case AudioJob::SET:
-			// TODO: only block should set to nullptr. used to remove the slot without deleting it
-			if(job.sampleSlot != nullptr){
-				delete slots[job.slot];
-			}
-			mixer.setSource(job.slot, job.sampleSlot ? &job.sampleSlot->getGenerator() : nullptr);
+			delete slots[job.slot];
 			slots[job.slot] = job.sampleSlot;
+			mixer.setSource(job.slot, job.sampleSlot ? &job.sampleSlot->getGenerator() : nullptr);
 			break;
 	}
 }

@@ -58,9 +58,8 @@ void Intro::onStart(){
 
 	// TODO: first time data
 
-	std::array<SlotConfig, 5> configs;
 	for(int i = 0; i < 5; i++){
-		configs[i].sample.sample = (Sample::SampleType) i;
+		configs[i].sample.type = (Sample::Type) i;
 		configs[i].slotIndex = i;
 	}
 	baker = std::unique_ptr<Baker>(new Baker(configs));
@@ -135,6 +134,11 @@ void Intro::loop(uint micros){
 }
 
 void Intro::launch(){
+	auto files = baker->getFiles();
+	for(int i = 0; i < 5; i++){
+		Playback.set(i, files[i], configs[i]);
+	}
+
 	stop();
 	delete this;
 

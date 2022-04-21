@@ -1,16 +1,16 @@
-#include <cstdlib>
 #include "TrackEditState.h"
 #include "../Visualization/LEDStrip.h"
 #include "../AudioSystem/PlaybackSystem.h"
 #include "../SaveManager.h"
 #include "SaveState.h"
 #include "PlaybackState.h"
+#include "SampleEditState.h"
 
 uint8_t TrackEditState::cursor = 0;
 
 TrackEditState::TrackEditState(){
 	for(uint8_t i = 0; i < 5; i++){
-		setButtonHoldTime(i, 500);
+		setButtonHoldTime(Synthia.slotToBtn(i), 500);
 	}
 
 	setButtonHoldTime(BTN_ENC_R, 500);
@@ -30,6 +30,11 @@ void TrackEditState::onStart(){
 	Input::getInstance()->addListener(this);
 	Encoders.addListener(this);
 	Sliders.addListener(this);
+
+	stickySlot = false;
+	for(int i = 0; i < 5; i++){
+		slotEraser[i] = false;
+	}
 }
 
 void TrackEditState::onStop(){
@@ -37,6 +42,12 @@ void TrackEditState::onStop(){
 	Encoders.removeListener(this);
 	Sliders.removeListener(this);
 	VMan.clearMain();
+
+	Synthia.TrackMatrix.clear();
+	Synthia.TrackMatrix.push();
+	LEDStrip.setMidFill(0);
+	LEDStrip.setRight(0);
+	LEDStrip.setLeft(0);
 }
 
 void TrackEditState::setTrack(Track track){
@@ -61,12 +72,14 @@ void TrackEditState::rightEncMove(int8_t amount){
 
 
 	for(auto btn : { BTN_1, BTN_2, BTN_3, BTN_4, BTN_5 }){
-		uint8_t slot = btnToSlot(btn);
+		uint8_t slot = Synthia.btnToSlot(btn);
 
 		if(slotEraser[slot]){
 			track.timeline.clear(cursor, slot);
+			stickySlot = true;
 		}else if(Input::getInstance()->getButtonState(btn)){
 			track.timeline.set(cursor, slot);
+			stickySlot = true;
 		}
 	}
 
@@ -90,9 +103,11 @@ void TrackEditState::rightPotMove(uint8_t value){
 
 
 void TrackEditState::buttonHeld(uint i){
-	int slot = btnToSlot(i);
+	int slot = Synthia.btnToSlot(i);
 	if(slot != -1){
-		//TODO - open SampleEditState
+		if(stickySlot) return;
+		auto sampleEdit = new SampleEditState(this, slot);
+		sampleEdit->push(this);
 	}else if(i == BTN_ENC_R){
 		track.timeline.clear(cursor);
 		pushTrackVis();
@@ -103,13 +118,14 @@ void TrackEditState::buttonHeld(uint i){
 }
 
 void TrackEditState::buttonReleased(uint i){
-	int slot = btnToSlot(i);
+	int slot = Synthia.btnToSlot(i);
 	if(i == -1) return;
 	slotEraser[slot] = false;
+	stickySlot = false;
 }
 
 void TrackEditState::click(uint8_t i){
-	int slot = btnToSlot(i);
+	int slot = Synthia.btnToSlot(i);
 
 	if(slot != -1){
 		track.timeline.set(cursor, slot);
@@ -125,7 +141,7 @@ void TrackEditState::click(uint8_t i){
 }
 
 void TrackEditState::doubleClick(uint8_t i){
-	int slot = btnToSlot(i);
+	int slot = Synthia.btnToSlot(i);
 
 	if(slot == -1) return;
 
@@ -135,7 +151,7 @@ void TrackEditState::doubleClick(uint8_t i){
 }
 
 void TrackEditState::buttonPressed(uint i){
-	int slot = btnToSlot(i);
+	int slot = Synthia.btnToSlot(i);
 
 	if(slot == -1){
 		click(i);
@@ -159,18 +175,4 @@ void TrackEditState::buttonPressed(uint i){
 
 void TrackEditState::pushTrackVis(){
 	trackVis.push({ track.timeline, cursor });
-}
-
-int TrackEditState::btnToSlot(uint8_t i){
-	static const std::unordered_map<uint8_t, uint8_t> map = {
-			{ BTN_1, 0 },
-			{ BTN_2, 1 },
-			{ BTN_3, 2 },
-			{ BTN_4, 3 },
-			{ BTN_5, 4 },
-	};
-
-	auto pair = map.find(i);
-	if(pair == map.end()) return -1;
-	return pair->second;
 }
