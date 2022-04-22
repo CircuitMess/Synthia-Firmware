@@ -30,6 +30,7 @@ private:
 
 	uint32_t step = 0;
 	uint32_t startTime;
+
 };
 
 

@@ -23,6 +23,10 @@ protected:
 	void onStop() override;
 private:
 	MatrixAnimGIF slotAnim;
+	MatrixAnimGIF yes;
+	MatrixAnimGIF no;
+	MatrixAnimGIF load;
+	MatrixAnimGIF save;
 };
 
 
