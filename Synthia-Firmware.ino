@@ -11,6 +11,7 @@
 #include "src/Visualization/RGBController.h"
 #include "src/States/State.h"
 #include "src/States/Intro.h"
+#include "src/States/UserHWTest.h"
 
 void initLog(){
 	esp_log_level_set("*", ESP_LOG_NONE);
@@ -22,20 +23,36 @@ void initLog(){
 	}
 }
 
+void boot(){
+	Playback.begin();
+	Player.begin();
+	VMan.begin();
+
+	State* state = new Intro();
+	state->start();
+}
+
 void setup(){
 	Serial.begin(115200);
 	initLog();
 	Synthia.begin();
 
-	Playback.begin();
-	Player.begin();
-	VMan.begin();
 
 	RGBTrack.begin(&Synthia.TrackRGB);
 	RGBSlot.begin(&Synthia.SlotRGB);
 
-	State* state = new Intro();
-	state->start();
+	if(!Settings.get().tested){
+		auto test = new UserHWTest([](){
+			Settings.get().tested = true;
+			Settings.store();
+			boot();
+		});
+
+		test->start();
+		return;
+	}
+
+	boot();
 }
 
 void loop(){
