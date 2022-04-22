@@ -3,7 +3,7 @@
 
 #include "SampleSlot.h"
 #include <FS/RamFile.h>
-#include <Audio/SourceAAC.h>
+#include <Audio/SourceWAV.h>
 #include <Data/FileDataSource.h>
 
 class PlaybackSlot : public SampleSlot {
@@ -12,13 +12,14 @@ public:
 	~PlaybackSlot() override;
 
 	Generator& getGenerator() override;
-	SourceAAC& getSource();
+	SourceWAV& getSource();
 
 	void seek(size_t pos, SeekMode mode = SeekSet) override;
 
 private:
 	FileDataSource ds;
-	SourceAAC source;
+	SourceWAV source;
+
 };
 
 
