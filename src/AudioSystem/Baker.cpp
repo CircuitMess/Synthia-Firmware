@@ -24,7 +24,11 @@ void Baker::start(){
 }
 
 void Baker::loop(uint micros){
-	if(state == PREPARING){
+	if(state == DONE){
+		LoopManager::removeListener(this);
+		cleanup();
+		return;
+	}else if(state == PREPARING){
 		// see comment above
 		return;
 	}else if(state != BAKING){
@@ -32,26 +36,21 @@ void Baker::loop(uint micros){
 		return;
 	}
 
-	bool running = false;
-	bool bakersRunning[5] = {true, true, true, true, true};
-
-	for(uint8_t i = 0; i < 5; i++){
-		auto slotBaker = slotBakers[i];
-		if(slotBaker->isDone() && bakersRunning[i]){
-			Playback.set(i, slotFiles[i], configs[i]);
-			bakersRunning[i] = false;
-		}
-		running |= bakersRunning[i];
+	if(baked == 5){
+		state = DONE;
+		cleanup();
+		return;
 	}
 
-	if(!running){
-		for(uint8_t i = 0; i < 5; i++){
-			delete editSlots[i];
-			delete slotBakers[i];
+	if(slotBakers[baked]->isDone()){
+		baked++;
+		if(baked == 5){
+			state = DONE;
+			LoopManager::removeListener(this);
+			cleanup();
+			return;
 		}
-
-		state = DONE;
-		LoopManager::removeListener(this);
+		slotBakers[baked]->start();
 	}
 }
 
@@ -59,11 +58,12 @@ void Baker::prepare(){
 
 	prepareSamples();
 
-	for(int i = 0; i < 5; i++){
-		slotBakers[i]->start();
-	}
-
+	slotBakers[0]->start();
 	state = BAKING;
+}
+
+bool Baker::isBaking(){
+	return state == BAKING || state == PREPARING;
 }
 
 bool Baker::isDone(){
@@ -86,4 +86,21 @@ void Baker::prepareSamples(){
 		editSlots[i] = editSlot;
 		slotBakers[i] = slotbaker;
 	}
+}
+
+void Baker::cleanup(){
+	for(uint8_t i = 0; i < 5; i++){
+		delete editSlots[i];
+		delete slotBakers[i];
+		editSlots[i] = nullptr;
+		slotBakers[i] = nullptr;
+	}
+}
+
+std::array<File, 5> Baker::getFiles(){
+	return slotFiles;
+}
+
+std::array<SlotConfig, 5> Baker::getConfigs(){
+	return configs;
 }

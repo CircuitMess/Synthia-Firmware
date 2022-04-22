@@ -16,7 +16,7 @@ void TempoAnim::loop(uint micros){
 	uint32_t currentStep = (int) floor((float) (millis() - startTime) / stepTime) % steps;
 	if(currentStep != step){
 		step = currentStep;
-		pushPixel();
+		push();
 	}
 }
 
@@ -27,7 +27,7 @@ void TempoAnim::reset(){
 void TempoAnim::onStart(){
 	LoopManager::addListener(this);
 	startTime = millis();
-	pushPixel();
+	push();
 }
 
 void TempoAnim::onStop(){
@@ -57,10 +57,10 @@ void TempoAnim::setTempo(uint8_t tempo){
 	startTime = round((float) millis() - (float) step * stepTime - (float) diff);
 }
 
-void TempoAnim::pushPixel(){
+void TempoAnim::push(){
 	clear();
 	drawPixel(step < getWidth() ? step : steps - step, { 255, 255, 255, 255 });
-	push();
+	pushMatrix();
 }
 
 uint8_t TempoAnim::getTempo() const{

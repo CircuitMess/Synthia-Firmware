@@ -23,7 +23,7 @@ void PlaybackState::onStart(){
 	Encoders.addListener(this);
 
 	lastStepTime = micros();
-	stepDuration = 60000000 / tempo;
+	stepDuration = 60000000 / (tempo * 4);
 	cursor = 0;
 
 	playStep(0);
@@ -79,7 +79,7 @@ void PlaybackState::buttonHeld(uint i){
 
 void PlaybackState::leftPotMove(uint8_t value){
 	tempo = map(value, 0, 255, 60, 220);
-	stepDuration = 60000000 / tempo;
+	stepDuration = 60000000 / (tempo * 4);
 	LEDStrip.setLeft(map(tempo, 60, 220, 0, 255));
 }
 

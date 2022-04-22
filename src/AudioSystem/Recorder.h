@@ -20,6 +20,8 @@ public:
 	bool isRecording();
 	bool isRecorded();
 
+	float getProgress();
+
 private:
 	void recordFunc();
 	static void writeHeaderWAV(File& file, size_t size);

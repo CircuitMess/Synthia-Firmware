@@ -15,7 +15,7 @@ public:
 	void clearMain();
 
 private:
-	const uint32_t mainRestartTimeout = 2000; // [ms]
+	const uint32_t mainRestartTimeout = 3500; // [ms]
 
 	VisualizerBase* main = nullptr;
 	VisualizerBase* current = nullptr;
@@ -39,6 +39,8 @@ public:
 	void push();
 
 	void setMain();
+
+	bool isStarted();
 
 protected:
 	template<typename T>

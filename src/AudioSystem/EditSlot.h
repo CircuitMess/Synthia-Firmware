@@ -6,6 +6,7 @@
 #include "PlaybackSlot.h"
 #include <Audio/EffectProcessor.h>
 #include <Audio/SpeedModifier.h>
+#include <Sync/Mutex.h>
 
 
 class EditSlot : public SampleSlot {
@@ -15,7 +16,6 @@ public:
 
 	void setEffect(EffectData::Type type, uint8_t intensity);
 	void setSpeed(uint8_t speed);
-	void setSample(const Sample& sample, File file);
 
 	Generator& getGenerator() override;
 	SlotConfig getConfig();
@@ -24,11 +24,12 @@ public:
 
 private:
 	SlotConfig config;
-	PlaybackSlot* playback;
 	SpeedModifier speeder;
 	EffectProcessor effector;
 
 	Effect* effects[4];
+	std::unique_ptr<PlaybackSlot> playback;
+
 };
 
 
