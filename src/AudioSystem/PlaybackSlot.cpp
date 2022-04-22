@@ -12,7 +12,7 @@ Generator& PlaybackSlot::getGenerator(){
 	return source;
 }
 
-SourceWAV& PlaybackSlot::getSource(){
+SourceAAC& PlaybackSlot::getSource(){
 	return source;
 }
 
