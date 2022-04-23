@@ -7,8 +7,10 @@ SaveVisualizer::SaveVisualizer() : slotAnim(SPIFFS.open("/GIF/Save/loadSave.gif"
 								   no(SPIFFS.open("/GIF/Save/no.gif"), &Synthia.TrackMatrix),
 								   yes(SPIFFS.open("/GIF/Save/yes.gif"), &Synthia.TrackMatrix),
 								   load(SPIFFS.open("/GIF/Save/load.gif"), &Synthia.TrackMatrix),
-								   save(SPIFFS.open("/GIF/Save/save.gif"), &Synthia.TrackMatrix){
-	load.setX(8);
+								   save(SPIFFS.open("/GIF/Save/save.gif"), &Synthia.TrackMatrix),
+								   diskette(SPIFFS.open("/GIF/Save/diskette.gif"), &Synthia.TrackMatrix){
+	load.setX(9);
+	save.setX(-1);
 	yes.setX(8);
 }
 
@@ -67,6 +69,21 @@ void SaveVisualizer::visualize(){
 				no.start();
 			}
 			LEDStrip.setMidSelection(data.selection);
+			break;
+
+		case Wait:
+			matrix.stopAnimations();
+			matrix.clear();
+			if(!diskette.isStarted()){
+				diskette.start();
+			}
+			if(data.selection && !load.isStarted()){
+				load.setX(9);
+				load.start();
+			}else if(!data.selection && !save.isStarted()){
+				save.setX(8);
+				save.start();
+			}
 			break;
 	}
 }

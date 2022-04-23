@@ -5,6 +5,10 @@
 #include "../Visualization/SaveVisualizer.h"
 #include <Synthia.h>
 #include <cstdlib>
+#include "../SaveManager.h"
+
+class Baker;
+class Task;
 
 class SaveState : public State, public EncoderListener, public InputListener, public LoopListener, public SliderListener {
 public:
@@ -31,14 +35,21 @@ private:
 	SaveStep step = SlotSelect;
 	uint8_t selection = 0;
 	uint8_t selectedSlot = 0;
-	enum {
+	enum class SaveAction{
 		Save, Load
-	} selectedAction;
+	} selectedAction = SaveAction::Save;
 
 	static uint8_t currentSaveSlot;
 
 	uint32_t inactiveTimer = 0;
 	const uint32_t  inactiveTimeout = 5000; //5 seconds
+
+	std::unique_ptr<Baker> baker;
+	std::unique_ptr<Task> saveTask;
+	std::unique_ptr<SaveData> saveData;
+	uint8_t waitFill = 0;
+	const uint32_t waitFillInterval = 20000;
+	uint32_t waitFillTime = 0;
 };
 
 
