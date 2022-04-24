@@ -20,16 +20,24 @@ void SaveState::loop(uint micros){
 			waitFill++;
 			LEDStrip.setMidFill(waitFill);
 		}
-		if(selectedAction == SaveAction::Save && saveTask){
-			if(saveTask->isStopped()){
+
+		if(selectedAction == SaveAction::Save && myTask){
+			if(myTask->isStopped()){
 				pop();
 			}
-		}else if(selectedAction == SaveAction::Load && baker){
+		}else if(selectedAction == SaveAction::Load && myTask && baker){
 			if(baker->isDone()){
+				Serial.println("baker done");
+			}
+			if(myTask->isStopped()){
+				Serial.println("mytask done");
+			}
+			if(baker->isDone() && myTask->isStopped()){
 				auto files = baker->getFiles();
 				for(int i = 0; i < 5; i++){
 					Playback.set(i, files[i], saveData->slots[i]);
 				}
+				delete baker;
 				trackEdit->setTrack(saveData->track);
 				pop();
 			}
@@ -83,37 +91,39 @@ void SaveState::save(){
 	Sliders.removeListener(this);
 	Input::getInstance()->removeListener(this);
 
-	saveTask = std::unique_ptr<Task>(new Task("saveTask", [](Task* t){
+	myTask = std::unique_ptr<Task>(new Task("saveTask", [](Task* t){
 		auto data = (SaveData*)t->arg;
 		saveManager.store(SaveState::currentSaveSlot, *data);
 		ESP_LOGI(TAG, "stored");
 		delete data;
 		ESP_LOGI(TAG, "temp data deleted");
 	}, 8192, (void*)data));
-	saveTask->start(1, 0);
+	myTask->start(1, 0);
 }
 
 void SaveState::load(){
-	uint32_t m = millis();
 	step = Wait;
 	ESP_LOGI(TAG, "loading...");
 
 	currentSaveSlot = selectedSlot;
 	visualizer.push({ step, 1 });
 
-	saveData = std::unique_ptr<SaveData>(new SaveData(saveManager.load(selectedSlot)));
 
 	Encoders.removeListener(this);
 	Sliders.removeListener(this);
 	Input::getInstance()->removeListener(this);
 
-	std::array<SlotConfig, 5> slotconfigs;
-	std::copy(std::begin(saveData->slots), std::end(saveData->slots), slotconfigs.begin());
+	myTask = std::unique_ptr<Task>(new Task("saveTask", [](Task* t){
+		auto data = std::unique_ptr<SaveData>(new SaveData(saveManager.load(SaveState::currentSaveSlot)));
 
-	m = millis() - m;
-	baker = std::unique_ptr<Baker>(new Baker(slotconfigs));
-	baker->start();
-	Serial.printf("load time : %d\n", m);
+		std::array<SlotConfig, 5> slotconfigs;
+		std::copy(std::begin(data->slots), std::end(data->slots), slotconfigs.begin());
+
+		auto baker = *((Baker**)t->arg);
+		baker = new Baker(slotconfigs);
+		baker->start();
+	}, 8192, (void*)&baker));
+	myTask->start(1, 0);
 }
 
 void SaveState::leftEncMove(int8_t amount){

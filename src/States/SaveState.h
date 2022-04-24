@@ -44,8 +44,8 @@ private:
 	uint32_t inactiveTimer = 0;
 	const uint32_t  inactiveTimeout = 5000; //5 seconds
 
-	std::unique_ptr<Baker> baker;
-	std::unique_ptr<Task> saveTask;
+	Baker* baker = nullptr;
+	std::unique_ptr<Task> myTask;
 	std::unique_ptr<SaveData> saveData;
 	uint8_t waitFill = 0;
 	const uint32_t waitFillInterval = 20000;
