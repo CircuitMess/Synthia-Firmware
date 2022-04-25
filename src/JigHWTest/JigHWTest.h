@@ -40,6 +40,8 @@ private:
 
 	static const uint32_t PSRAMSize = 4194252; //starting size reported by ESP.getFreePsram() after initialization
 
+	void postTest();
+
 };
 
 #endif //CHATTER_FIRMWARE_JIGHWTEST_H

@@ -5,6 +5,9 @@
 #include <Synthia.h>
 #include "../AudioSystem/PlaybackSystem.h"
 #include <Wire.h>
+#include <Devices/Matrix/MatrixAnimGIF.h>
+#include "../Visualization/TempoAnim.h"
+#include <Loop/LoopManager.h>
 
 JigHWTest *JigHWTest::test = nullptr;
 
@@ -12,7 +15,7 @@ JigHWTest::JigHWTest(){
 	test = this;
 
 	tests.push_back({ JigHWTest::PSRAMTest, "PSRAM", [](){}});
-	tests.push_back({ JigHWTest::IS31Test, "IS31 charlieplex", [](){}});
+	tests.push_back({ JigHWTest::IS31Test, "Charlie", [](){}});
 	tests.push_back({JigHWTest::SPIFFSTest, "SPIFFS", [](){ }});
 }
 
@@ -46,48 +49,48 @@ void JigHWTest::start(){
 
 	Serial.println("TEST:passall");
 
-	Playback.begin();
+	postTest();
+}
+
+void JigHWTest::postTest(){
+	// Disable input
+	LoopManager::removeListener(Synthia.getInput());
+	LoopManager::removeListener(&Sliders);
+	LoopManager::removeListener(&Encoders);
+
+	// Audio test
+	/*Playback.begin();
 	Playback.setVolume(200);
 
-	//TODO - definirati koji sample će se puštati kad svi testovi passaju
 	Playback.set(0, SPIFFS.open("/Samples/clap.wav"), SlotConfig{});
-//	Playback.set(0, SPIFFS.open("/Samples/intro.wav"), SlotConfig{});
 	Playback.play(0);
 
 	Synthia.TrackMatrix.setBrightness(150);
 	Synthia.CursorMatrix.setBrightness(150);
-	Synthia.SlidersMatrix.setBrightness(150);
-	Synthia.SlotRGB.setBrightness(255);
-	Synthia.TrackRGB.setBrightness(255);
+	Synthia.SlidersMatrix.setBrightness(150);*/
 
-	Synthia.TrackMatrix.clear(MatrixPixel::White);
-	Synthia.TrackMatrix.push();
-	Synthia.CursorMatrix.clear(MatrixPixel::White);
-	Synthia.CursorMatrix.push();
-	Synthia.SlidersMatrix.clear(MatrixPixel::White);
-	Synthia.SlidersMatrix.push();
+	// Matrix test
+	Synthia.TrackMatrix.startAnimation(new MatrixAnimGIF(SPIFFS.open("/GIF/Swipe.gif")));
+	Synthia.SlidersMatrix.startAnimation(new MatrixAnimGIF(SPIFFS.open("/GIF/Intro/Sliders.gif")));
+	Synthia.CursorMatrix.startAnimation(new TempoAnim(&Synthia.CursorMatrix));
+
+	uint32_t blinkTime = 0;
+	uint8_t blinkIndex = 0;
+	std::array<MatrixPixel, 3> blinkColors = { MatrixPixel::Red, MatrixPixel::Green, MatrixPixel::Blue };
 
 	for(;;){
-		Synthia.TrackRGB.clear(MatrixPixel::Red);
+		LoopManager::loop();
+
+		if(millis() - blinkTime < 500) continue;
+		blinkTime = millis();
+
+		blinkIndex = (blinkIndex + 1) % blinkColors.size();
+
+		Synthia.TrackRGB.clear(blinkColors[blinkIndex]);
 		Synthia.TrackRGB.push();
-		Synthia.SlotRGB.clear(MatrixPixel::Red);
+
+		Synthia.SlotRGB.clear(blinkColors[blinkIndex]);
 		Synthia.SlotRGB.push();
-
-		delay(500);
-
-		Synthia.TrackRGB.clear(MatrixPixel::Green);
-		Synthia.TrackRGB.push();
-		Synthia.SlotRGB.clear(MatrixPixel::Green);
-		Synthia.SlotRGB.push();
-
-		delay(500);
-
-		Synthia.TrackRGB.clear(MatrixPixel::Blue);
-		Synthia.TrackRGB.push();
-		Synthia.SlotRGB.clear(MatrixPixel::Blue);
-		Synthia.SlotRGB.push();
-
-		delay(500);
 	}
 }
 
