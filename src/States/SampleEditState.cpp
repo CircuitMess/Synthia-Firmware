@@ -66,7 +66,8 @@ void SampleEditState::onStart(){
 	sampleVis.push({ config.sample.type, true });
 	RGBSlot.setColor(slot, MatrixPixel::Yellow);
 
-	LEDStrip.setRightFromCenter(config.speed);
+	LEDStrip.setLeftFromCenter((int8_t)((int)(config.speed) - 128));
+	LEDStrip.setRight(config.effects[(size_t) selectedEffect].intensity);
 
 	//TODO - start rgb anim for track leds
 	//Synthia.TrackRGB.startAnimation()
@@ -217,6 +218,7 @@ void SampleEditState::rightEncMove(int8_t amount){
 
 void SampleEditState::leftPotMove(uint8_t value){
 	editSlot->setSpeed(value);
+	config.speed = value;
 	speedVis.push(value);
 }
 
