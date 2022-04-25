@@ -88,12 +88,6 @@ void SampleEditState::onStop(){
 			delay(1);
 		}
 	}
-
-	Synthia.TrackMatrix.clear();
-	Synthia.TrackMatrix.push();
-	LEDStrip.setMidFill(0);
-	LEDStrip.setRight(0);
-	LEDStrip.setLeft(0);
 }
 
 void SampleEditState::buttonHeld(uint i){
@@ -107,6 +101,9 @@ void SampleEditState::buttonHeld(uint i){
 	// TODO: loading
 	Synthia.TrackMatrix.clear();
 	Synthia.TrackMatrix.push();
+	LEDStrip.setMidFill(0);
+	LEDStrip.setRight(0);
+	LEDStrip.setLeft(0);
 
 	Task bake("SampleEdit-Bake", [](Task* task){
 		SampleEditState* state = static_cast<SampleEditState*>(task->arg);
