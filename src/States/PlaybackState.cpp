@@ -26,6 +26,9 @@ void PlaybackState::onStart(){
 	stepDuration = 60000000 / (tempo * 4);
 	cursor = 0;
 
+	LEDStrip.setLeft(map(tempo, 60, 220, 0, 255));
+	LEDStrip.setRight(Playback.getVolume());
+
 	playStep(0);
 	pushTrackVis();
 }
