@@ -310,7 +310,7 @@ bool JigHWTest::AudioTest(){
 	delay(500);
 
 
-	float freqTests[] = {500, 750, 1250, 8000};
+	float freqTests[] = {500, 750, 1250};
 	bool freqTest = true;
 
 	for(float & frequency : freqTests){
