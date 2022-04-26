@@ -7,6 +7,7 @@
 
 uint8_t SaveState::currentSaveSlot = 0;
 static const char* TAG = "SaveState";
+SaveData SaveState::saveData;
 
 SaveState::SaveState(TrackEditState* trackEdit) : State(trackEdit), trackEdit(trackEdit){
 
@@ -25,21 +26,20 @@ void SaveState::loop(uint micros){
 			if(myTask->isStopped()){
 				pop();
 			}
-		}else if(selectedAction == SaveAction::Load && myTask && baker){
-			if(baker->isDone()){
-				Serial.println("baker done");
-			}
-			if(myTask->isStopped()){
-				Serial.println("mytask done");
-			}
-			if(baker->isDone() && myTask->isStopped()){
-				auto files = baker->getFiles();
-				for(int i = 0; i < 5; i++){
-					Playback.set(i, files[i], saveData->slots[i]);
+		}else if(selectedAction == SaveAction::Load && myTask){
+			if(myTask->isStopped() && baker){
+				if(!baker->isDone() && !baker->isBaking()){
+					baker->start();
+				}else if(baker->isDone()){
+					auto files = baker->getFiles();
+					auto configs = baker->getConfigs();
+					for(int i = 0; i < 5; i++){
+						Playback.set(i, files[i], configs[i]);
+					}
+					delete baker;
+					trackEdit->setTrack(saveData.track);
+					pop();
 				}
-				delete baker;
-				trackEdit->setTrack(saveData->track);
-				pop();
 			}
 		}
 	}
@@ -81,10 +81,9 @@ void SaveState::save(){
 
 	visualizer.push({ step, 0 });
 
-	auto data = new SaveData;
-	data->track = trackEdit->getTrack();
+	saveData.track = trackEdit->getTrack();
 	for(uint8_t i = 0; i < 5; ++i){
-		data->slots[i] = Playback.getConfig(i);
+		saveData.slots[i] = Playback.getConfig(i);
 	}
 
 	Encoders.removeListener(this);
@@ -92,12 +91,9 @@ void SaveState::save(){
 	Input::getInstance()->removeListener(this);
 
 	myTask = std::unique_ptr<Task>(new Task("saveTask", [](Task* t){
-		auto data = (SaveData*)t->arg;
-		saveManager.store(SaveState::currentSaveSlot, *data);
+		saveManager.store(SaveState::currentSaveSlot, SaveState::saveData);
 		ESP_LOGI(TAG, "stored");
-		delete data;
-		ESP_LOGI(TAG, "temp data deleted");
-	}, 8192, (void*)data));
+	}, 8192));
 	myTask->start(1, 0);
 }
 
@@ -113,15 +109,14 @@ void SaveState::load(){
 	Sliders.removeListener(this);
 	Input::getInstance()->removeListener(this);
 
-	myTask = std::unique_ptr<Task>(new Task("saveTask", [](Task* t){
-		auto data = std::unique_ptr<SaveData>(new SaveData(saveManager.load(SaveState::currentSaveSlot)));
-
+	myTask = std::unique_ptr<Task>(new Task("loadTask", [](Task* t){
+		auto &data = SaveState::saveData;
+		data = saveManager.load(SaveState::currentSaveSlot);
 		std::array<SlotConfig, 5> slotconfigs;
-		std::copy(std::begin(data->slots), std::end(data->slots), slotconfigs.begin());
+		std::copy(std::begin(data.slots), std::end(data.slots), slotconfigs.begin());
 
-		auto baker = *((Baker**)t->arg);
-		baker = new Baker(slotconfigs);
-		baker->start();
+		auto baker = new Baker(slotconfigs);
+		*((Baker**)t->arg) = baker;
 	}, 8192, (void*)&baker));
 	myTask->start(1, 0);
 }
@@ -199,6 +194,3 @@ void SaveState::rightPotMove(uint8_t value){
 
 	pop();
 }
-
-
-

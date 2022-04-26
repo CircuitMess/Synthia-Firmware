@@ -46,7 +46,7 @@ private:
 
 	Baker* baker = nullptr;
 	std::unique_ptr<Task> myTask;
-	std::unique_ptr<SaveData> saveData;
+	static SaveData saveData;
 	uint8_t waitFill = 0;
 	const uint32_t waitFillInterval = 20000;
 	uint32_t waitFillTime = 0;
