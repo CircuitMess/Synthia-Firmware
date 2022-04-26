@@ -9,14 +9,29 @@
 #include "../Visualization/TempoAnim.h"
 #include <Loop/LoopManager.h>
 
-JigHWTest *JigHWTest::test = nullptr;
+static const i2s_config_t i2s_config = {
+		.mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_RX),
+		.sample_rate = SAMPLE_RATE,
+		.bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
+		.channel_format = I2S_CHANNEL_FMT_ONLY_RIGHT,
+		.communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
+		.intr_alloc_flags = 0,
+		.dma_buf_count = 2,
+		.dma_buf_len = 512,
+		.use_apll = false,
+		.tx_desc_auto_clear = true,
+		.fixed_mclk = 0
+};
+
+JigHWTest* JigHWTest::test = nullptr;
 
 JigHWTest::JigHWTest(){
 	test = this;
 
 	tests.push_back({ JigHWTest::PSRAMTest, "PSRAM", [](){}});
 	tests.push_back({ JigHWTest::IS31Test, "Charlie", [](){}});
-	tests.push_back({JigHWTest::SPIFFSTest, "SPIFFS", [](){ }});
+	tests.push_back({ JigHWTest::SPIFFSTest, "SPIFFS", [](){}});
+	tests.push_back({ JigHWTest::AudioTest, "Audio", [](){}});
 }
 
 void JigHWTest::start(){
@@ -179,6 +194,143 @@ uint32_t JigHWTest::calcChecksum(File& file){
 	}
 
 	return sum;
+}
+
+bool JigHWTest::AudioTest(){
+
+	esp_err_t err = i2s_driver_install(I2S_NUM_0, &i2s_config, 0, nullptr);
+	if(err != ESP_OK){
+		test->log("Failed installing I2S driver", (uint32_t)err);
+		return false;
+	}
+
+	err = i2s_set_pin(I2S_NUM_0, &i2s_pin_config);
+	if(err != ESP_OK){
+		test->log("Failed setting I2S pins", (uint32_t)err);
+		return false;
+	}
+
+	Task waveTask("Wave", [](Task* task){
+		size_t bufferSize;
+		int16_t* buffer = nullptr;
+		float currentFreq;
+
+		auto generate = [&bufferSize, &buffer](float freq){
+			int numSamples = ceil(16000.0f / freq);
+			float omega = 2.0f * M_PI * freq;
+			float timeDelta = (1.0f / freq) / (float)numSamples;
+			float amp = 2000; // amplitude (max is 2^15 - 1)
+
+			bufferSize = numSamples * 2 * sizeof(int16_t);
+			buffer = static_cast<int16_t*>(realloc(buffer, bufferSize));
+			for(int i = 0; i < numSamples; i++){
+				buffer[i * 2 + 1] = sin(omega * timeDelta * (float)i) * amp;
+			}
+		};
+
+		size_t bytesWritten;
+
+		while(task->running){
+			float freq = *static_cast<float*>(task->arg);
+			if(freq == 0) continue;
+			if(freq != currentFreq){
+				generate(freq);
+				currentFreq = freq;
+			}
+
+			i2s_write(I2S_NUM_0, buffer, bufferSize, &bytesWritten, portMAX_DELAY);
+		}
+
+		free(buffer);
+	});
+
+	float currentFreq = 0;
+	waveTask.arg = &currentFreq;
+
+	int numSamples = 128;
+	size_t i2sBufferSize = numSamples * 2 * sizeof(int16_t);
+	char* i2sBuffer = static_cast<char*>(malloc(i2sBufferSize));
+	int16_t* buffer = static_cast<int16_t*>(malloc(i2sBufferSize / 2));
+	memset(buffer, 0, i2sBufferSize / 2);
+
+	struct cmplx {
+		float re;
+		float im;
+	};
+	float W = 2.0f * M_PI / (float)numSamples;
+	cmplx* X = static_cast<cmplx*>(malloc(numSamples * sizeof(cmplx)));
+
+	auto recordFreq = [&currentFreq, buffer, i2sBuffer, i2sBufferSize](float freq){
+		currentFreq = freq;
+
+		size_t readSize;
+		// Pre-record
+		for(int i = 0; i < 100; i++){
+			i2s_read(I2S_NUM_0, (char*)i2sBuffer, i2sBufferSize, &readSize, portMAX_DELAY);
+		}
+
+		// Record
+		for(int j = 0; j < i2sBufferSize; j += 4){
+			int16_t sample = *(int16_t*)(&i2sBuffer[j + 2]) + 3705;
+			buffer[j / 4] = sample;
+		}
+	};
+
+	auto testFreq = [recordFreq, buffer, numSamples, W, X](float freq) -> bool{
+		recordFreq(freq);
+
+		// DFT
+		for(int i = 0; i < numSamples; i++){
+			X[i].re = X[i].im = 0;
+
+			for(int j = 0; j < numSamples; j++){
+				X[i].re += (float)buffer[j] * cos(W * (float)i * (float)j);
+				X[i].im -= (float)buffer[j] * sin(W * (float)i * (float)j);
+			}
+		}
+
+		auto f = [X](size_t i) -> float{
+			return sqrt(pow(X[i].re, 2) + pow(X[i].im, 2));
+		};
+
+		int target = round((float)numSamples * freq / 16000.0f);
+
+		float targetFreq = f(target);
+
+		test->log("amp", targetFreq);
+
+		return targetFreq > 50000
+			   && targetFreq > 3.0f * f(target - 3)
+			   && targetFreq > 3.0f * f(target - 2)
+			   && targetFreq > 3.0f * f(target + 2)
+			   && targetFreq > 3.0f * f(target + 3);
+	};
+
+	waveTask.start(2, 0);
+	delay(500);
+
+
+	float freqTests[] = {500, 750, 1250, 8000};
+	bool freqTest = true;
+
+	for(float & frequency : freqTests){
+		bool freq = testFreq(frequency);
+		freqTest = freqTest && freq;
+		if(!freq){
+			test->log("Failed on frequency", frequency);
+		}
+	}
+
+	err = i2s_driver_uninstall(I2S_NUM_0);
+	waveTask.stop();
+	delay(500);
+
+	if(err != ESP_OK){
+		test->log("Failed uninstalling I2S driver", (uint32_t)err);
+		return false;
+	}
+
+	return freqTest;
 }
 
 
