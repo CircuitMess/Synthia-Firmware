@@ -217,15 +217,19 @@ void SampleEditState::rightEncMove(int8_t amount){
 }
 
 void SampleEditState::leftPotMove(uint8_t value){
-	editSlot->setSpeed(value);
 	config.speed = value;
 	speedVis.push(value);
+
+	if(!editSlot) return;
+	editSlot->setSpeed(value);
 }
 
 void SampleEditState::rightPotMove(uint8_t value){
-	editSlot->setEffect(selectedEffect, value);
 	config.effects[(size_t) selectedEffect].intensity = value;
 	effectVis.push(config.effects[(uint8_t) selectedEffect]);
+
+	if(!editSlot) return;
+	editSlot->setEffect(selectedEffect, value);
 }
 
 void SampleEditState::loop(uint micros){
