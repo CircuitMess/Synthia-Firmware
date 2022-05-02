@@ -49,6 +49,15 @@ void PlaybackSystem::release(uint8_t slot){
 	jobs.send(&job);
 }
 
+void PlaybackSystem::pause(){
+	AudioJob job { AudioJob::PAUSE, 0, nullptr };
+	jobs.send(&job);
+}
+
+void PlaybackSystem::resume(){
+	paused = false;
+}
+
 void PlaybackSystem::play(uint8_t slot){
 	if(!task.running) return;
 
@@ -86,7 +95,9 @@ void PlaybackSystem::taskFunc(Task* task){
 			system->processJob(job);
 		}
 
-		system->output.loop(0);
+		if(system->output.isRunning() && !system->paused){
+			system->output.loop(0);
+		}
 
 		vTaskDelay(1);
 	}
@@ -97,8 +108,8 @@ void PlaybackSystem::processJob(AudioJob &job){
 		case AudioJob::PLAY:
 			if(slots[job.slot] != nullptr){
 				slots[job.slot]->play();
+				output.start();
 			}
-			output.start();
 			break;
 		case AudioJob::RELEASE:
 			slots[job.slot] = nullptr;
@@ -108,6 +119,14 @@ void PlaybackSystem::processJob(AudioJob &job){
 			delete slots[job.slot];
 			slots[job.slot] = job.sampleSlot;
 			mixer.setSource(job.slot, job.sampleSlot ? &job.sampleSlot->getGenerator() : nullptr);
+			break;
+		case AudioJob::PAUSE:
+			for(int i = 0; i < 5; i++){
+				if(!slots[i]) continue;
+				slots[i]->seek(0, fs::SeekEnd);
+			}
+			output.start();
+			paused = true;
 			break;
 	}
 }
@@ -125,4 +144,8 @@ void PlaybackSystem::setVolume(uint8_t volume){
 	float gain = volume / 255.0; //TODO - add function for volume level curve
 
 	output.setGain(gain);
+}
+
+bool PlaybackSystem::isPaused(){
+	return paused;
 }
