@@ -65,7 +65,10 @@ void SampleEditState::onStart(){
 	Input::getInstance()->addListener(this);
 
 	sampleVis.setMain();
-	sampleVis.push({ config.sample.type, true });
+	sampleVis.push({ config.sample.type, SampleVisData::Recorded });
+	if(config.sample.type == Sample::Type::RECORDING){
+		recorded = true;
+	}
 
 	LEDStrip.setLeftFromCenter((int8_t)((int)(config.speed) - 128));
 	LEDStrip.setRight(config.effects[(size_t) selectedEffect].intensity);
@@ -146,6 +149,7 @@ void SampleEditState::buttonPressed(uint i){
 	if(recorder == nullptr || recorder->isRecording()) return;
 
 	RGBSlot.setSolid(slot, MatrixPixel::Red);
+	sampleVis.push({ config.sample.type, SampleVisData::Recording });
 
 	recorder->start();
 	LoopManager::addListener(this);
@@ -168,7 +172,7 @@ void SampleEditState::leftEncMove(int8_t amount){
 	}
 
 	if(!sampleVis.isStarted()){
-		sampleVis.push({ (Sample::Type) type, recorder == nullptr });
+		sampleVis.push({ (Sample::Type) type, recorded ? SampleVisData::Recorded : SampleVisData::Waiting });
 		Playback.play(slot);
 		return;
 	}
@@ -192,6 +196,8 @@ void SampleEditState::leftEncMove(int8_t amount){
 
 		recorder = new Recorder();
 		RGBSlot.blinkContinuous(slot, MatrixPixel::Red);
+
+		recorded = false;
 	}else{
 		editSlot = new EditSlot(config, RamFile::open(rawSamples[type]));
 		Playback.edit(slot, editSlot);
@@ -199,7 +205,7 @@ void SampleEditState::leftEncMove(int8_t amount){
 		RGBSlot.setSolid(slot, MatrixPixel::Yellow);
 	}
 
-	sampleVis.push({ (Sample::Type) type, recorder == nullptr });
+	sampleVis.push({ (Sample::Type) type, SampleVisData::Waiting });
 }
 
 void SampleEditState::rightEncMove(int8_t amount){
@@ -273,7 +279,8 @@ void SampleEditState::loop(uint micros){
 	LEDStrip.setMidFill(0);
 	LEDStrip.setLeftFromCenter(0);
 
-	sampleVis.push({ config.sample.type, true });
+	recorded = true;
+	sampleVis.push({ config.sample.type, SampleVisData::Recorded });
 
 	LoopManager::removeListener(this);
 }

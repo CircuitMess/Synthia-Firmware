@@ -39,6 +39,7 @@ private:
 	Recorder* recorder = nullptr;
 
 	Task* load;
+	bool recorded = false;
 
 	EffectData::Type selectedEffect = EffectData::Type::VOLUME;
 
