@@ -257,7 +257,7 @@ void SampleEditState::loop(uint micros){
 	uint8_t* buf = static_cast<uint8_t*>(malloc(1024));
 	size_t total = 0;
 	while(total < f.size()){
-		size_t size = f.read(buf, min(1024, f.size() - dest.size()));
+		size_t size = f.read(buf, min(1024, f.size() - total));
 		dest.write(buf, size);
 		total += size;
 	}
@@ -269,6 +269,7 @@ void SampleEditState::loop(uint micros){
 
 	RGBSlot.setColor(slot, MatrixPixel::Green);
 	LEDStrip.setMidFill(0);
+	LEDStrip.setLeftFromCenter(0);
 
 	sampleVis.push({ config.sample.type, true });
 
