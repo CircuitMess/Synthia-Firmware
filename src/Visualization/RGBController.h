@@ -3,6 +3,7 @@
 
 #include <Loop/LoopListener.h>
 #include <Devices/Matrix/MatrixPixel.h>
+#include <Devices/Matrix/MatrixAnimGIF.h>
 
 class Matrix;
 
@@ -19,7 +20,10 @@ public:
 	void blinkTwice(uint8_t slot, MatrixPixel color);
 	void blinkAllTwice(MatrixPixel color);
 	void blinkContinuous(uint8_t slot, MatrixPixel color);
-	void playAnim();
+
+	enum Anim { TrackEdit, SampleEdit };
+	void playAnim(Anim anim);
+	void stopAnim();
 
 	void loop(uint micros) final;
 
@@ -42,6 +46,7 @@ private:
 	const uint32_t blinkDuration = 100; //[ms]
 	const uint32_t blinkContinuousDuration = 500; //[ms]
 
+	std::array<MatrixAnimGIF*, 2> anims;
 };
 
 extern RGBController RGBTrack;

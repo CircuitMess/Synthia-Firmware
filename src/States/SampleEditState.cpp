@@ -73,8 +73,7 @@ void SampleEditState::onStart(){
 	LEDStrip.setLeftFromCenter((int8_t)((int)(config.speed) - 128));
 	LEDStrip.setRight(config.effects[(size_t) selectedEffect].intensity);
 
-	//TODO - start rgb anim for track leds
-	//Synthia.TrackRGB.startAnimation()
+	RGBTrack.playAnim(RGBController::SampleEdit);
 }
 
 void SampleEditState::onStop(){
@@ -109,6 +108,7 @@ void SampleEditState::buttonHeld(uint i){
 	LEDStrip.setMidFill(0);
 	LEDStrip.setRight(0);
 	LEDStrip.setLeft(0);
+	RGBTrack.stopAnim();
 
 	Task bake("SampleEdit-Bake", [](Task* task){
 		SampleEditState* state = static_cast<SampleEditState*>(task->arg);

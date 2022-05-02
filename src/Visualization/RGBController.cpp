@@ -1,6 +1,9 @@
 #include "RGBController.h"
 #include <Devices/Matrix/Matrix.h>
 #include <Loop/LoopManager.h>
+#include <SPIFFS.h>
+#include <FS/RamFile.h>
+#include <Synthia.h>
 
 RGBController RGBTrack;
 RGBController RGBSlot;
@@ -12,6 +15,11 @@ RGBController::RGBController(){
 void RGBController::begin(Matrix* matrix){
 	this->matrix = matrix;
 	LoopManager::addListener(this);
+
+	anims = {
+			new MatrixAnimGIF(RamFile::open(SPIFFS.open("/GIF/TrackEditState.gif")), matrix),
+			new MatrixAnimGIF(RamFile::open(SPIFFS.open("/GIF/SampleEditState.gif")), matrix)
+	};
 }
 
 void RGBController::setColor(uint8_t slot, MatrixPixel color){
@@ -147,7 +155,18 @@ void RGBController::loop(uint micros){
 	}
 }
 
-void RGBController::playAnim(){
+void RGBController::playAnim(enum Anim anim){
+	int index = (int) anim;
+	if(index >= anims.size()) return;
+
 	state = Anim;
-	// TODO: start GIF animation
+	matrix->startAnimation(anims[index]);
+}
+
+void RGBController::stopAnim(){
+	state = Single;
+	matrix->stopAnimations();
+
+	matrix->clear();
+	matrix->push();
 }
