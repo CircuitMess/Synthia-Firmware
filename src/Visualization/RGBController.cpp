@@ -44,6 +44,16 @@ void RGBController::clear(){
 	matrix->push();
 }
 
+void RGBController::setSolid(uint8_t slot, MatrixPixel color){
+	if(slot >= 5) return;
+
+	if(state == Anim) return;
+
+	slotStates[slot] = Solid;
+
+	setColor(slot, color);
+}
+
 void RGBController::blink(uint8_t slot, MatrixPixel color){
 	if(slot >= 5) return;
 

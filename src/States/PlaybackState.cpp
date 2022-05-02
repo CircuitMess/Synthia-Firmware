@@ -74,8 +74,10 @@ void PlaybackState::buttonHeld(uint i){
 
 		if(disabledSlots[slot]){
 			RGBSlot.setColor(slot, MatrixPixel::Red);
+			RGBTrack.setColor(slot, MatrixPixel::Red);
 		}else{
 			RGBSlot.setColor(slot, MatrixPixel::Off);
+			RGBTrack.setColor(slot, MatrixPixel::Off);
 		}
 	}
 }

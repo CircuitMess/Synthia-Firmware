@@ -46,6 +46,8 @@ SampleEditState::~SampleEditState(){
 }
 
 void SampleEditState::onStart(){
+	RGBSlot.setColor(slot, MatrixPixel::Yellow);
+
 	load->start(1, 0);
 	MatrixAnimGIF intro(SPIFFS.open("/GIF/SampleEdit.gif"), &Synthia.TrackMatrix);
 	intro.getGIF().setLoopMode(GIF::SINGLE);
@@ -64,7 +66,6 @@ void SampleEditState::onStart(){
 
 	sampleVis.setMain();
 	sampleVis.push({ config.sample.type, true });
-	RGBSlot.setColor(slot, MatrixPixel::Yellow);
 
 	LEDStrip.setLeftFromCenter((int8_t)((int)(config.speed) - 128));
 	LEDStrip.setRight(config.effects[(size_t) selectedEffect].intensity);
@@ -144,7 +145,7 @@ void SampleEditState::buttonPressed(uint i){
 	if(config.sample.type != Sample::Type::RECORDING) return;
 	if(recorder == nullptr || recorder->isRecording()) return;
 
-	RGBSlot.setColor(slot, MatrixPixel::Red);
+	RGBSlot.setSolid(slot, MatrixPixel::Red);
 
 	recorder->start();
 	LoopManager::addListener(this);
@@ -195,6 +196,7 @@ void SampleEditState::leftEncMove(int8_t amount){
 		editSlot = new EditSlot(config, RamFile::open(rawSamples[type]));
 		Playback.edit(slot, editSlot);
 		Playback.play(slot);
+		RGBSlot.setSolid(slot, MatrixPixel::Yellow);
 	}
 
 	sampleVis.push({ (Sample::Type) type, recorder == nullptr });
@@ -267,7 +269,7 @@ void SampleEditState::loop(uint micros){
 	editSlot = new EditSlot(config, f);
 	Playback.edit(slot, editSlot);
 
-	RGBSlot.setColor(slot, MatrixPixel::Green);
+	RGBSlot.setSolid(slot, MatrixPixel::Yellow);
 	LEDStrip.setMidFill(0);
 	LEDStrip.setLeftFromCenter(0);
 

@@ -13,6 +13,7 @@ public:
 
 	void setColor(uint8_t slot, MatrixPixel color = { 0, 0, 0, 0 });
 	void clear();
+	void setSolid(uint8_t slot, MatrixPixel color);
 	void blink(uint8_t slot, MatrixPixel color);
 	void blinkAll(MatrixPixel color);
 	void blinkTwice(uint8_t slot, MatrixPixel color);
