@@ -12,8 +12,8 @@ Recorder::Recorder() : task("Recorder", [](Task* task){
 	recorder->recordFunc();
 }, 8192, this){
 
-	i2sBuffer = static_cast<char*>(malloc(i2sBufferSize));
-	wavBuffer = static_cast<int16_t*>(malloc(wavBufferSize));
+	i2sBuffer = static_cast<char*>(calloc(i2sBufferSize, 1));
+	wavBuffer = static_cast<int16_t*>(calloc(wavBufferSize, 1));
 }
 
 Recorder::~Recorder(){
@@ -35,7 +35,9 @@ void Recorder::start(){
 }
 
 void Recorder::recordFunc(){
+	i2s_zero_dma_buffer(I2S_NUM_0);
 
+	int max = 0;
 	while(task.running){
 		if(state != RECORDING) break;
 
@@ -47,11 +49,8 @@ void Recorder::recordFunc(){
 
 		for(int j = 0; j < i2sBufferSize; j += 4){
 			int16_t sample = *(int16_t*)(&i2sBuffer[j + 2]);
-			sample *= 2;
 
-			if(sampleCount <= BUFFER_SAMPLES * 2){
-				sample = (float) sample * pow((float) sampleCount / ((float) BUFFER_SAMPLES * 2.0f), 2);
-			}
+			max = std::max(max, abs(sample));
 
 			wavBuffer[sampleCount] = sample;
 			sampleCount++;
@@ -60,6 +59,26 @@ void Recorder::recordFunc(){
 		}
 
 		if(sampleCount >= maxSamples) break;
+	}
+
+	int16_t target = wavBuffer[1000];
+	for(int i = 0; i < 1001; i++){
+		wavBuffer[i] = ((float) i / 1000.0f) * (float) target;
+	}
+
+	if(sampleCount > 3000){
+		for(int i = sampleCount - 2000, j = 0; i < sampleCount; i++, j++){
+			wavBuffer[i] = (1.0f - pow((float) j / 2001.0f, 2)) * (float) wavBuffer[i];
+		}
+	}
+
+	float factor = (float) (INT16_MAX + 10) / (float) max;
+	for(int i = 0; i < sampleCount; i++){
+		wavBuffer[i] = (float) wavBuffer[i] * factor;
+	}
+
+	for(int i = 0; i < silentSamples; i++){
+		wavBuffer[sampleCount++] = 0;
 	}
 
 	state = DONE;

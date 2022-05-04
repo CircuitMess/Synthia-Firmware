@@ -31,10 +31,11 @@ private:
 	} state = WAITING;
 
 	const float maxRecordTime = 1.0f; // in seconds
+	const size_t silentSamples = 12000;
 	// i2s buffer: int16 stereo
 	// wav buffer: int16 mono
 	const size_t i2sBufferSize = BUFFER_SAMPLES * 4; // 2 channels * 2 bytes per sample
-	const size_t wavBufferSize = SAMPLE_RATE * BYTES_PER_SAMPLE * maxRecordTime;
+	const size_t wavBufferSize = SAMPLE_RATE * BYTES_PER_SAMPLE * maxRecordTime + BYTES_PER_SAMPLE * silentSamples;
 	const size_t maxSamples = SAMPLE_RATE * maxRecordTime; // time * sampleRate * 4 bytes per sample (sample is int16_t, 2 channels)
 
 	int16_t* wavBuffer;
