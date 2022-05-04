@@ -160,6 +160,7 @@ void RGBController::playAnim(enum Anim anim){
 	if(index >= anims.size()) return;
 
 	state = Anim;
+	anims[index]->reset();
 	matrix->startAnimation(anims[index]);
 }
 
