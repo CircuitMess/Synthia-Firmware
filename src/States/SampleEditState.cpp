@@ -109,6 +109,7 @@ void SampleEditState::buttonHeld(uint i){
 	LEDStrip.setRight(0);
 	LEDStrip.setLeft(0);
 	RGBTrack.stopAnim();
+	RGBSlot.clear();
 
 	Task bake("SampleEdit-Bake", [](Task* task){
 		SampleEditState* state = static_cast<SampleEditState*>(task->arg);
