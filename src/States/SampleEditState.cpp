@@ -34,7 +34,7 @@ SampleEditState::SampleEditState(State* parent, uint8_t slot) : State(parent), s
 		}else{
 			state->editSlot = new EditSlot(state->config, RamFile::open(state->rawSamples[((uint8_t)state->config.sample.type)]));
 		}
-	}, 2048, this);
+	}, 4096, this);
 
 	setButtonHoldTime(Synthia.slotToBtn(slot), 500);
 }
@@ -127,7 +127,7 @@ void SampleEditState::buttonHeld(uint i){
 		}
 
 		Playback.set(state->slot, file, state->config);
-	}, 2048, this);
+	}, 4096, this);
 	bake.start(1, 0);
 
 	MatrixAnimGIF outro(SPIFFS.open("/GIF/TrackEdit.gif"), &Synthia.TrackMatrix);
