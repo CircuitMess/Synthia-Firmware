@@ -30,6 +30,8 @@ private:
 	void buttonReleased(uint i) override;
 	void buttonPressed(uint i) override;
 
+	void saveRecording(SlotConfig* other);
+
 	uint8_t slot = 0;
 	EditSlot *editSlot = nullptr;
 	SlotConfig config;
@@ -39,6 +41,7 @@ private:
 	Recorder* recorder = nullptr;
 
 	Task* load;
+	bool recorded = false;
 
 	EffectData::Type selectedEffect = EffectData::Type::VOLUME;
 

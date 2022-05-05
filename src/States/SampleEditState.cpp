@@ -4,6 +4,7 @@
 #include "../AudioSystem/PlaybackSystem.h"
 #include "../AudioSystem/SlotBaker.h"
 #include "../Visualization/LEDStrip.h"
+#include "../Services/SlotPlayer.h"
 
 SampleEditState::SampleEditState(State* parent, uint8_t slot) : State(parent), slot(slot), config(Playback.getConfig(slot)){
 	config.sample.fileIndex = config.slotIndex = slot;
@@ -34,7 +35,7 @@ SampleEditState::SampleEditState(State* parent, uint8_t slot) : State(parent), s
 		}else{
 			state->editSlot = new EditSlot(state->config, RamFile::open(state->rawSamples[((uint8_t)state->config.sample.type)]));
 		}
-	}, 2048, this);
+	}, 4096, this);
 
 	setButtonHoldTime(Synthia.slotToBtn(slot), 500);
 }
@@ -46,6 +47,8 @@ SampleEditState::~SampleEditState(){
 }
 
 void SampleEditState::onStart(){
+	RGBSlot.setColor(slot, MatrixPixel::Yellow);
+
 	load->start(1, 0);
 	MatrixAnimGIF intro(SPIFFS.open("/GIF/SampleEdit.gif"), &Synthia.TrackMatrix);
 	intro.getGIF().setLoopMode(GIF::SINGLE);
@@ -63,14 +66,15 @@ void SampleEditState::onStart(){
 	Input::getInstance()->addListener(this);
 
 	sampleVis.setMain();
-	sampleVis.push({ config.sample.type, true });
-	RGBSlot.setColor(slot, MatrixPixel::Yellow);
+	sampleVis.push({ config.sample.type, SampleVisData::Recorded });
+	if(config.sample.type == Sample::Type::RECORDING){
+		recorded = true;
+	}
 
 	LEDStrip.setLeftFromCenter((int8_t)((int)(config.speed) - 128));
 	LEDStrip.setRight(config.effects[(size_t) selectedEffect].intensity);
 
-	//TODO - start rgb anim for track leds
-	//Synthia.TrackRGB.startAnimation()
+	RGBTrack.playAnim(RGBController::SampleEdit);
 }
 
 void SampleEditState::onStop(){
@@ -105,6 +109,8 @@ void SampleEditState::buttonHeld(uint i){
 	LEDStrip.setMidFill(0);
 	LEDStrip.setRight(0);
 	LEDStrip.setLeft(0);
+	RGBTrack.stopAnim();
+	RGBSlot.clear();
 
 	Task bake("SampleEdit-Bake", [](Task* task){
 		SampleEditState* state = static_cast<SampleEditState*>(task->arg);
@@ -122,7 +128,7 @@ void SampleEditState::buttonHeld(uint i){
 		}
 
 		Playback.set(state->slot, file, state->config);
-	}, 2048, this);
+	}, 4096, this);
 	bake.start(1, 0);
 
 	MatrixAnimGIF outro(SPIFFS.open("/GIF/TrackEdit.gif"), &Synthia.TrackMatrix);
@@ -139,15 +145,27 @@ void SampleEditState::buttonHeld(uint i){
 }
 
 void SampleEditState::buttonPressed(uint i){
-	int s = Synthia.btnToSlot(i);
-	if(s != slot) return;
 	if(config.sample.type != Sample::Type::RECORDING) return;
 	if(recorder == nullptr || recorder->isRecording()) return;
 
-	RGBSlot.setColor(slot, MatrixPixel::Red);
+	int s = Synthia.btnToSlot(i);
 
-	recorder->start();
-	LoopManager::addListener(this);
+	if(s == slot){
+		RGBSlot.setSolid(slot, MatrixPixel::Red);
+		sampleVis.push({ config.sample.type, SampleVisData::Recording });
+
+		recorder->start();
+		Player.disable();
+		LoopManager::addListener(this);
+	}else{
+		auto otherConfig = Playback.getConfig(s);
+		if(otherConfig.sample.type != Sample::Type::RECORDING) return;
+
+		delete recorder;
+		recorder = nullptr;
+
+		saveRecording(&otherConfig);
+	}
 }
 
 void SampleEditState::buttonReleased(uint i){
@@ -167,7 +185,7 @@ void SampleEditState::leftEncMove(int8_t amount){
 	}
 
 	if(!sampleVis.isStarted()){
-		sampleVis.push({ (Sample::Type) type, recorder == nullptr });
+		sampleVis.push({ (Sample::Type) type, recorded ? SampleVisData::Recorded : SampleVisData::Waiting });
 		Playback.play(slot);
 		return;
 	}
@@ -191,13 +209,26 @@ void SampleEditState::leftEncMove(int8_t amount){
 
 		recorder = new Recorder();
 		RGBSlot.blinkContinuous(slot, MatrixPixel::Red);
+
+		recorded = false;
+
+		for(int i = 0; i < 5; i++){
+			if(i == slot) continue;
+			auto config = Playback.getConfig(i);
+			if(config.sample.type == Sample::Type::RECORDING){
+				RGBSlot.setSolid(i, MatrixPixel::Blue);
+			}
+		}
 	}else{
 		editSlot = new EditSlot(config, RamFile::open(rawSamples[type]));
 		Playback.edit(slot, editSlot);
 		Playback.play(slot);
+
+		RGBSlot.clear();
+		RGBSlot.setSolid(slot, MatrixPixel::Yellow);
 	}
 
-	sampleVis.push({ (Sample::Type) type, recorder == nullptr });
+	sampleVis.push({ (Sample::Type) type, SampleVisData::Waiting });
 }
 
 void SampleEditState::rightEncMove(int8_t amount){
@@ -217,18 +248,22 @@ void SampleEditState::rightEncMove(int8_t amount){
 }
 
 void SampleEditState::leftPotMove(uint8_t value){
-	editSlot->setSpeed(value);
 	config.speed = value;
 	speedVis.push(value);
+
+	if(!editSlot) return;
+	editSlot->setSpeed(value);
 }
 
 void SampleEditState::rightPotMove(uint8_t value){
-	editSlot->setEffect(selectedEffect, value);
 	config.effects[(size_t) selectedEffect].intensity = value;
 	effectVis.push(config.effects[(uint8_t) selectedEffect]);
+
+	if(!editSlot) return;
+	editSlot->setEffect(selectedEffect, value);
 }
 
-void SampleEditState::loop(uint micros){
+void SampleEditState::loop(uint t){
 	if(!recorder){
 		LoopManager::removeListener(this);
 		return;
@@ -240,33 +275,65 @@ void SampleEditState::loop(uint micros){
 
 	if(!recorder->isRecorded()) return;
 
-	File f = RamFile::create();
-	recorder->commit(f);
-	delete recorder;
-	recorder = nullptr;
+	LoopManager::removeListener(this);
+	saveRecording(nullptr);
+	Player.enable();
+}
 
-	String path = String("/Recordings/") + config.sample.fileIndex + ".wav";
-	SPIFFS.remove(path);
-	File dest = SPIFFS.open(path, FILE_WRITE);
+void SampleEditState::saveRecording(SlotConfig* other){
+	void* data[2] = { this, other };
 
-	f.seek(0);
-	uint8_t* buf = static_cast<uint8_t*>(malloc(1024));
-	size_t total = 0;
-	while(total < f.size()){
-		size_t size = f.read(buf, min(1024, f.size() - dest.size()));
-		dest.write(buf, size);
-		total += size;
+	Task save("SampleEdit-RecSave", [](Task* task){
+		void** data = static_cast<void**>(task->arg);
+		SampleEditState* state = static_cast<SampleEditState*>(data[0]);
+		SlotConfig* otherConfig = static_cast<SlotConfig*>(data[1]);
+
+		File f;
+		if(otherConfig == nullptr){
+			f = RamFile::create();
+			state->recorder->commit(f);
+		}else{
+			f = RamFile::open(openSample(*otherConfig));
+		}
+
+		delete state->recorder;
+		state->recorder = nullptr;
+
+		String path = String("/Recordings/") + state->slot + ".wav";
+		SPIFFS.remove(path);
+		File dest = SPIFFS.open(path, FILE_WRITE);
+
+		f.seek(0);
+		uint8_t* buf = static_cast<uint8_t*>(malloc(1024));
+		size_t total = 0;
+		while(total < f.size()){
+			size_t size = f.read(buf, min(1024, f.size() - total));
+			dest.write(buf, size);
+			total += size;
+		}
+		dest.close();
+		free(buf);
+
+		state->editSlot = new EditSlot(state->config, f);
+	}, 4096, data);
+
+	RGBSlot.clear();
+	RGBSlot.setSolid(slot, MatrixPixel::Yellow);
+	LEDStrip.setMidFill(0);
+	LEDStrip.setLeftFromCenter(0);
+
+	MatrixAnimGIF outro(RamFile::open(SPIFFS.open("/GIF/Loading.gif")), &Synthia.TrackMatrix);
+	outro.getGIF().setLoopMode(GIF::INFINITE);
+	outro.start();
+
+	save.start(1, 0);
+	while(save.running){
+		outro.loop(0);
+		RGBTrack.loopAnims();
 	}
-	dest.close();
-	free(buf);
 
-	editSlot = new EditSlot(config, f);
 	Playback.edit(slot, editSlot);
 
-	RGBSlot.setColor(slot, MatrixPixel::Green);
-	LEDStrip.setMidFill(0);
-
-	sampleVis.push({ config.sample.type, true });
-
-	LoopManager::removeListener(this);
+	recorded = true;
+	sampleVis.push({ config.sample.type, SampleVisData::Recorded });
 }

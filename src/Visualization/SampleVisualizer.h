@@ -7,7 +7,7 @@
 
 struct SampleVisData {
 	Sample::Type type;
-	bool recorded;
+	enum { Waiting, Recording, Recorded } recState;
 };
 
 class SampleVisualizer : public Visualizer<SampleVisData>{
@@ -22,7 +22,7 @@ protected:
 	void onStop() override;
 
 private:
-	static const char* Anims[(size_t) Sample::Type::SIZE + 1];
+	static const char* Anims[(size_t) Sample::Type::SIZE + 2];
 	std::vector<std::unique_ptr<MatrixAnimGIF>> anims;
 
 };

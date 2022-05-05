@@ -26,6 +26,9 @@ void PlaybackState::onStart(){
 	stepDuration = 60000000 / (tempo * 4);
 	cursor = 0;
 
+	LEDStrip.setLeft(map(tempo, 60, 220, 0, 255));
+	LEDStrip.setRight(Playback.getVolume());
+
 	playStep(0);
 	pushTrackVis();
 }
@@ -71,8 +74,10 @@ void PlaybackState::buttonHeld(uint i){
 
 		if(disabledSlots[slot]){
 			RGBSlot.setColor(slot, MatrixPixel::Red);
+			RGBTrack.setColor(slot, MatrixPixel::Red);
 		}else{
 			RGBSlot.setColor(slot, MatrixPixel::Off);
+			RGBTrack.setColor(slot, MatrixPixel::Off);
 		}
 	}
 }

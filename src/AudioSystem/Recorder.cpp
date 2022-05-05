@@ -1,4 +1,5 @@
 #include "Recorder.h"
+#include "PlaybackSystem.h"
 #include <FS/RamFile.h>
 #include <Loop/LoopManager.h>
 #include <Setup.hpp>
@@ -6,27 +7,13 @@
 
 static const char* TAG = "Recorder";
 
-const i2s_config_t recconfig = {
-		.mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_RX),
-		.sample_rate = SAMPLE_RATE,
-		.bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
-		.channel_format = I2S_CHANNEL_FMT_ONLY_RIGHT,
-		.communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
-		.intr_alloc_flags = 0,
-		.dma_buf_count = 2,
-		.dma_buf_len = 512,
-		.use_apll = false,
-		.tx_desc_auto_clear = true,
-		.fixed_mclk = 0
-};
-
 Recorder::Recorder() : task("Recorder", [](Task* task){
 	auto recorder = static_cast<Recorder*>(task->arg);
 	recorder->recordFunc();
 }, 8192, this){
 
-	i2sBuffer = static_cast<char*>(malloc(i2sBufferSize));
-	wavBuffer = static_cast<int16_t*>(malloc(wavBufferSize));
+	i2sBuffer = static_cast<char*>(calloc(i2sBufferSize, 1));
+	wavBuffer = static_cast<int16_t*>(calloc(wavBufferSize, 1));
 }
 
 Recorder::~Recorder(){
@@ -38,42 +25,32 @@ void Recorder::start(){
 	if(state != WAITING) return;
 	state = RECORDING;
 
+	Playback.pause();
+	while(!Playback.isPaused()){
+		delay(1);
+	}
+
 	sampleCount = 0;
 	task.start(1, 0);
 }
 
 void Recorder::recordFunc(){
-	esp_err_t err;
-	if((err = i2s_driver_install(I2S_NUM_1, &recconfig, 0, NULL)) != ESP_OK){
-		ESP_LOGE(TAG, "Failed installing I2S driver: %d ", err);
+	i2s_zero_dma_buffer(I2S_NUM_0);
 
-		state = WAITING;
-		return;
-	}
-	if((err = i2s_set_pin(I2S_NUM_1, &i2s_pin_config)) != ESP_OK){
-		ESP_LOGE(TAG, "Failed setting I2S pin: %d ", err);
-
-		if((err = i2s_driver_uninstall(I2S_NUM_1)) != ESP_OK){
-			ESP_LOGE(TAG, "Failed uninstalling I2S driver: %d ", err);
-		}
-
-		state = WAITING;
-		return;
-	}
-
+	int max = 0;
 	while(task.running){
 		if(state != RECORDING) break;
 
 		size_t readSize;
-		i2s_read(I2S_NUM_1, i2sBuffer, i2sBufferSize, &readSize, portMAX_DELAY);
+		int status;
+		if((status = i2s_read(I2S_NUM_0, i2sBuffer, i2sBufferSize, &readSize, portMAX_DELAY)) != ESP_OK){
+			ESP_LOGE(TAG, "I2S Read error %d", status);
+		}
 
 		for(int j = 0; j < i2sBufferSize; j += 4){
 			int16_t sample = *(int16_t*)(&i2sBuffer[j + 2]);
-			sample *= 2;
 
-			if(sampleCount <= BUFFER_SAMPLES * 2){
-				sample = (float) sample * pow((float) sampleCount / ((float) BUFFER_SAMPLES * 2.0f), 2);
-			}
+			max = std::max(max, abs(sample));
 
 			wavBuffer[sampleCount] = sample;
 			sampleCount++;
@@ -84,11 +61,28 @@ void Recorder::recordFunc(){
 		if(sampleCount >= maxSamples) break;
 	}
 
-	if((err = i2s_driver_uninstall(I2S_NUM_1)) != ESP_OK){
-		ESP_LOGE(TAG, "Failed installing I2S driver: %d ", err);
+	int16_t target = wavBuffer[1000];
+	for(int i = 0; i < 1001; i++){
+		wavBuffer[i] = ((float) i / 1000.0f) * (float) target;
+	}
+
+	if(sampleCount > 3000){
+		for(int i = sampleCount - 2000, j = 0; i < sampleCount; i++, j++){
+			wavBuffer[i] = (1.0f - pow((float) j / 2001.0f, 2)) * (float) wavBuffer[i];
+		}
+	}
+
+	float factor = (float) (INT16_MAX + 10) / (float) max;
+	for(int i = 0; i < sampleCount; i++){
+		wavBuffer[i] = (float) wavBuffer[i] * factor;
+	}
+
+	for(int i = 0; i < silentSamples; i++){
+		wavBuffer[sampleCount++] = 0;
 	}
 
 	state = DONE;
+	Playback.resume();
 }
 
 void Recorder::stop(){

@@ -7,14 +7,12 @@
 SlotPlayer Player;
 
 void SlotPlayer::begin(){
+	Synthia.getInput()->addListener(this);
 	enable();
 }
 
 void SlotPlayer::buttonPressed(uint id){
-	if(!enabled){
-		Synthia.getInput()->removeListener(this);
-		return;
-	}
+	if(!enabled) return;
 
 	static const std::unordered_map<uint8_t, uint8_t> KeyMap = {
 			{ BTN_1, 0 },
@@ -32,12 +30,10 @@ void SlotPlayer::buttonPressed(uint id){
 
 void SlotPlayer::enable(){
 	enabled = true;
-	Synthia.getInput()->addListener(this);
 }
 
 void SlotPlayer::disable(){
 	enabled = false;
-	Synthia.getInput()->removeListener(this);
 }
 
 void SlotPlayer::play(uint8_t slot){

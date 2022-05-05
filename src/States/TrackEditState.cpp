@@ -5,6 +5,7 @@
 #include "SaveState.h"
 #include "PlaybackState.h"
 #include "SampleEditState.h"
+#include "../Visualization/RGBController.h"
 
 uint8_t TrackEditState::cursor = 0;
 
@@ -35,6 +36,8 @@ void TrackEditState::onStart(){
 	for(int i = 0; i < 5; i++){
 		slotEraser[i] = false;
 	}
+
+	RGBTrack.playAnim(RGBController::TrackEdit);
 }
 
 void TrackEditState::onStop(){
@@ -48,6 +51,8 @@ void TrackEditState::onStop(){
 	LEDStrip.setMidFill(0);
 	LEDStrip.setRight(0);
 	LEDStrip.setLeft(0);
+
+	RGBTrack.stopAnim();
 }
 
 void TrackEditState::setTrack(Track track){
