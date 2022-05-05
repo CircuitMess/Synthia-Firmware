@@ -171,3 +171,9 @@ void RGBController::stopAnim(){
 	matrix->clear();
 	matrix->push();
 }
+
+void RGBController::loopAnims(){
+	for(auto anim : anims){
+		anim->loop(0);
+	}
+}

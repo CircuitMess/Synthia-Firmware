@@ -26,6 +26,7 @@ public:
 	void stopAnim();
 
 	void loop(uint micros) final;
+	void loopAnims();
 
 private:
 	Matrix* matrix = nullptr;

@@ -144,16 +144,26 @@ void SampleEditState::buttonHeld(uint i){
 }
 
 void SampleEditState::buttonPressed(uint i){
-	int s = Synthia.btnToSlot(i);
-	if(s != slot) return;
 	if(config.sample.type != Sample::Type::RECORDING) return;
 	if(recorder == nullptr || recorder->isRecording()) return;
 
-	RGBSlot.setSolid(slot, MatrixPixel::Red);
-	sampleVis.push({ config.sample.type, SampleVisData::Recording });
+	int s = Synthia.btnToSlot(i);
 
-	recorder->start();
-	LoopManager::addListener(this);
+	if(s == slot){
+		RGBSlot.setSolid(slot, MatrixPixel::Red);
+		sampleVis.push({ config.sample.type, SampleVisData::Recording });
+
+		recorder->start();
+		LoopManager::addListener(this);
+	}else{
+		auto otherConfig = Playback.getConfig(s);
+		if(otherConfig.sample.type != Sample::Type::RECORDING) return;
+
+		delete recorder;
+		recorder = nullptr;
+
+		saveRecording(&otherConfig);
+	}
 }
 
 void SampleEditState::buttonReleased(uint i){
@@ -199,10 +209,20 @@ void SampleEditState::leftEncMove(int8_t amount){
 		RGBSlot.blinkContinuous(slot, MatrixPixel::Red);
 
 		recorded = false;
+
+		for(int i = 0; i < 5; i++){
+			if(i == slot) continue;
+			auto config = Playback.getConfig(i);
+			if(config.sample.type == Sample::Type::RECORDING){
+				RGBSlot.setSolid(i, MatrixPixel::Blue);
+			}
+		}
 	}else{
 		editSlot = new EditSlot(config, RamFile::open(rawSamples[type]));
 		Playback.edit(slot, editSlot);
 		Playback.play(slot);
+
+		RGBSlot.clear();
 		RGBSlot.setSolid(slot, MatrixPixel::Yellow);
 	}
 
@@ -241,7 +261,7 @@ void SampleEditState::rightPotMove(uint8_t value){
 	editSlot->setEffect(selectedEffect, value);
 }
 
-void SampleEditState::loop(uint micros){
+void SampleEditState::loop(uint t){
 	if(!recorder){
 		LoopManager::removeListener(this);
 		return;
@@ -253,11 +273,26 @@ void SampleEditState::loop(uint micros){
 
 	if(!recorder->isRecorded()) return;
 
-	Task save("SampleEdit-RecSave", [](Task* task){
-		SampleEditState* state = static_cast<SampleEditState*>(task->arg);
+	LoopManager::removeListener(this);
+	saveRecording(nullptr);
+}
 
-		File f = RamFile::create();
-		state->recorder->commit(f);
+void SampleEditState::saveRecording(SlotConfig* other){
+	void* data[2] = { this, other };
+
+	Task save("SampleEdit-RecSave", [](Task* task){
+		void** data = static_cast<void**>(task->arg);
+		SampleEditState* state = static_cast<SampleEditState*>(data[0]);
+		SlotConfig* otherConfig = static_cast<SlotConfig*>(data[1]);
+
+		File f;
+		if(otherConfig == nullptr){
+			f = RamFile::create();
+			state->recorder->commit(f);
+		}else{
+			f = RamFile::open(openSample(*otherConfig));
+		}
+
 		delete state->recorder;
 		state->recorder = nullptr;
 
@@ -277,7 +312,7 @@ void SampleEditState::loop(uint micros){
 		free(buf);
 
 		state->editSlot = new EditSlot(state->config, f);
-	}, 4096, this);
+	}, 4096, data);
 
 	RGBSlot.clear();
 	RGBSlot.setSolid(slot, MatrixPixel::Yellow);
@@ -298,6 +333,4 @@ void SampleEditState::loop(uint micros){
 
 	recorded = true;
 	sampleVis.push({ config.sample.type, SampleVisData::Recorded });
-
-	LoopManager::removeListener(this);
 }
