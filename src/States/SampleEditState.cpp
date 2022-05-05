@@ -253,32 +253,48 @@ void SampleEditState::loop(uint micros){
 
 	if(!recorder->isRecorded()) return;
 
-	File f = RamFile::create();
-	recorder->commit(f);
-	delete recorder;
-	recorder = nullptr;
+	Task save("SampleEdit-RecSave", [](Task* task){
+		SampleEditState* state = static_cast<SampleEditState*>(task->arg);
 
-	String path = String("/Recordings/") + config.sample.fileIndex + ".wav";
-	SPIFFS.remove(path);
-	File dest = SPIFFS.open(path, FILE_WRITE);
+		File f = RamFile::create();
+		state->recorder->commit(f);
+		delete state->recorder;
+		state->recorder = nullptr;
 
-	f.seek(0);
-	uint8_t* buf = static_cast<uint8_t*>(malloc(1024));
-	size_t total = 0;
-	while(total < f.size()){
-		size_t size = f.read(buf, min(1024, f.size() - total));
-		dest.write(buf, size);
-		total += size;
-	}
-	dest.close();
-	free(buf);
+		String path = String("/Recordings/") + state->slot + ".wav";
+		SPIFFS.remove(path);
+		File dest = SPIFFS.open(path, FILE_WRITE);
 
-	editSlot = new EditSlot(config, f);
-	Playback.edit(slot, editSlot);
+		f.seek(0);
+		uint8_t* buf = static_cast<uint8_t*>(malloc(1024));
+		size_t total = 0;
+		while(total < f.size()){
+			size_t size = f.read(buf, min(1024, f.size() - total));
+			dest.write(buf, size);
+			total += size;
+		}
+		dest.close();
+		free(buf);
 
+		state->editSlot = new EditSlot(state->config, f);
+	}, 4096, this);
+
+	RGBSlot.clear();
 	RGBSlot.setSolid(slot, MatrixPixel::Yellow);
 	LEDStrip.setMidFill(0);
 	LEDStrip.setLeftFromCenter(0);
+
+	MatrixAnimGIF outro(RamFile::open(SPIFFS.open("/GIF/Loading.gif")), &Synthia.TrackMatrix);
+	outro.getGIF().setLoopMode(GIF::INFINITE);
+	outro.start();
+
+	save.start(1, 0);
+	while(save.running){
+		outro.loop(0);
+		RGBTrack.loopAnims();
+	}
+
+	Playback.edit(slot, editSlot);
 
 	recorded = true;
 	sampleVis.push({ config.sample.type, SampleVisData::Recorded });
