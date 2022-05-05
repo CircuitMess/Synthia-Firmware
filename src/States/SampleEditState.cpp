@@ -4,6 +4,7 @@
 #include "../AudioSystem/PlaybackSystem.h"
 #include "../AudioSystem/SlotBaker.h"
 #include "../Visualization/LEDStrip.h"
+#include "../Services/SlotPlayer.h"
 
 SampleEditState::SampleEditState(State* parent, uint8_t slot) : State(parent), slot(slot), config(Playback.getConfig(slot)){
 	config.sample.fileIndex = config.slotIndex = slot;
@@ -154,6 +155,7 @@ void SampleEditState::buttonPressed(uint i){
 		sampleVis.push({ config.sample.type, SampleVisData::Recording });
 
 		recorder->start();
+		Player.disable();
 		LoopManager::addListener(this);
 	}else{
 		auto otherConfig = Playback.getConfig(s);
@@ -275,6 +277,7 @@ void SampleEditState::loop(uint t){
 
 	LoopManager::removeListener(this);
 	saveRecording(nullptr);
+	Player.enable();
 }
 
 void SampleEditState::saveRecording(SlotConfig* other){
