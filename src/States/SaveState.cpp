@@ -128,7 +128,7 @@ void SaveState::load(){
 void SaveState::leftEncMove(int8_t amount){
 	inactiveTimer = 0;
 	if(step == SlotSelect){
-		if((amount < 0 && selection == 0) || (amount > 0 && selection == 9)) return;
+		if((amount < 0 && selection == 0) || (amount > 0 && selection == 3)) return;
 
 		selection += amount;
 	}else if(step == ActionSelect || step == Confirmation){
