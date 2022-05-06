@@ -4,6 +4,7 @@
 #include "../AudioSystem/PlaybackSystem.h"
 #include <Loop/LoopManager.h>
 #include "../Visualization/LEDStrip.h"
+#include "../Services/SlotPlayer.h"
 
 uint8_t SaveState::currentSaveSlot = 0;
 static const char* TAG = "SaveState";
@@ -71,6 +72,7 @@ void SaveState::onStop(){
 	Sliders.removeListener(this);
 	Input::getInstance()->removeListener(this);
 	LoopManager::removeListener(this);
+	Player.enable();
 }
 
 void SaveState::save(){
@@ -89,6 +91,7 @@ void SaveState::save(){
 	Encoders.removeListener(this);
 	Sliders.removeListener(this);
 	Input::getInstance()->removeListener(this);
+	Player.disable();
 
 	myTask = std::unique_ptr<Task>(new Task("saveTask", [](Task* t){
 		saveManager.store(SaveState::currentSaveSlot, SaveState::saveData);
@@ -108,6 +111,7 @@ void SaveState::load(){
 	Encoders.removeListener(this);
 	Sliders.removeListener(this);
 	Input::getInstance()->removeListener(this);
+	Player.disable();
 
 	myTask = std::unique_ptr<Task>(new Task("loadTask", [](Task* t){
 		auto &data = SaveState::saveData;
