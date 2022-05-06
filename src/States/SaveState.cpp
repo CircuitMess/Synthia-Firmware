@@ -1,22 +1,55 @@
 #include <cstdlib>
 #include "SaveState.h"
-#include "../SaveManager.h"
 #include "../AudioSystem/Baker.h"
 #include "../AudioSystem/PlaybackSystem.h"
 #include <Loop/LoopManager.h>
+#include "../Visualization/LEDStrip.h"
+#include "../Services/SlotPlayer.h"
 
 uint8_t SaveState::currentSaveSlot = 0;
+static const char* TAG = "SaveState";
+SaveData SaveState::saveData;
 
 SaveState::SaveState(TrackEditState* trackEdit) : State(trackEdit), trackEdit(trackEdit){
 
 }
 
 void SaveState::loop(uint micros){
+	if(step == Wait){
+		waitFillTime += micros;
+		if(waitFillTime >= waitFillInterval){
+			waitFillTime = 0;
+			waitFill++;
+			LEDStrip.setMidFill(waitFill);
+		}
+
+		if(selectedAction == SaveAction::Save && myTask){
+			if(myTask->isStopped()){
+				pop();
+			}
+		}else if(selectedAction == SaveAction::Load && myTask){
+			if(myTask->isStopped() && baker){
+				if(!baker->isDone() && !baker->isBaking()){
+					baker->start();
+				}else if(baker->isDone()){
+					auto files = baker->getFiles();
+					auto configs = baker->getConfigs();
+					for(int i = 0; i < 5; i++){
+						Playback.set(i, files[i], configs[i]);
+					}
+					delete baker;
+					trackEdit->setTrack(saveData.track);
+					pop();
+				}
+			}
+		}
+	}
+
 	if(step != SlotSelect) return;
 
 	inactiveTimer += micros;
 	if(inactiveTimer >= inactiveTimeout * 1000){
-		ESP_LOGI("SaveState", "inactivity timeout");
+		ESP_LOGI(TAG, "inactivity timeout");
 		pop();
 	}
 }
@@ -26,7 +59,7 @@ void SaveState::onStart(){
 	selection = currentSaveSlot;
 	inactiveTimer = 0;
 
-	visualizer.push({step, currentSaveSlot});
+	visualizer.push({ step, currentSaveSlot });
 
 	Encoders.addListener(this);
 	Sliders.addListener(this);
@@ -39,50 +72,70 @@ void SaveState::onStop(){
 	Sliders.removeListener(this);
 	Input::getInstance()->removeListener(this);
 	LoopManager::removeListener(this);
-
+	Player.enable();
 }
 
 void SaveState::save(){
-	ESP_LOGI("SaveState", "saving...");
+	step = Wait;
+	ESP_LOGI(TAG, "saving...");
 
 	currentSaveSlot = selectedSlot;
-	SaveData data;
-	data.track = trackEdit->getTrack();
+
+	visualizer.push({ step, 0 });
+
+	saveData.track = trackEdit->getTrack();
 	for(uint8_t i = 0; i < 5; ++i){
-		data.slots[i] = Playback.getConfig(i);
+		saveData.slots[i] = Playback.getConfig(i);
 	}
-	saveManager.store(selectedSlot, data);
-	pop();
+
+	Encoders.removeListener(this);
+	Sliders.removeListener(this);
+	Input::getInstance()->removeListener(this);
+	Player.disable();
+
+	myTask = std::unique_ptr<Task>(new Task("saveTask", [](Task* t){
+		saveManager.store(SaveState::currentSaveSlot, SaveState::saveData);
+		ESP_LOGI(TAG, "stored");
+	}, 8192));
+	myTask->start(1, 0);
 }
 
 void SaveState::load(){
-	ESP_LOGI("SaveState", "loading...");
+	step = Wait;
+	ESP_LOGI(TAG, "loading...");
 
 	currentSaveSlot = selectedSlot;
-	SaveData data = saveManager.load(selectedSlot);
-	std::array<SlotConfig, 5> slotconfigs;
-	std::copy(std::begin(data.slots), std::end(data.slots), slotconfigs.begin());
-
-	Baker baker(slotconfigs);
-	baker.start();
-	while(!baker.isDone());
+	visualizer.push({ step, 1 });
 
 
-	trackEdit->setTrack(data.track);
-	pop();
+	Encoders.removeListener(this);
+	Sliders.removeListener(this);
+	Input::getInstance()->removeListener(this);
+	Player.disable();
+
+	myTask = std::unique_ptr<Task>(new Task("loadTask", [](Task* t){
+		auto &data = SaveState::saveData;
+		data = saveManager.load(SaveState::currentSaveSlot);
+		std::array<SlotConfig, 5> slotconfigs;
+		std::copy(std::begin(data.slots), std::end(data.slots), slotconfigs.begin());
+
+		auto baker = new Baker(slotconfigs);
+		*((Baker**)t->arg) = baker;
+	}, 8192, (void*)&baker));
+	myTask->start(1, 0);
 }
 
 void SaveState::leftEncMove(int8_t amount){
 	inactiveTimer = 0;
 	if(step == SlotSelect){
-		if((amount < 0 && selection == 0) || (amount > 0 && selection == 9)) return;
+		if((amount < 0 && selection == 0) || (amount > 0 && selection == 3)) return;
 
 		selection += amount;
 	}else if(step == ActionSelect || step == Confirmation){
 		if((amount < 0 && !selection) || (amount > 0 && selection)) return;
 		selection = !selection;
 	}
-	visualizer.push({step, selection});
+	visualizer.push({ step, selection });
 }
 
 void SaveState::buttonPressed(uint i){
@@ -103,38 +156,45 @@ void SaveState::buttonPressed(uint i){
 
 		case ActionSelect:
 			step = Confirmation;
-			selectedAction = (selection ? Save : Load);
+			selectedAction = (selection ? SaveAction::Load : SaveAction::Save);
 			selection = 0;
 			visualizer.push({ step, selection });
 			break;
 
 		case Confirmation:
 			if(selection){
-				selectedAction ? save() : load();
+				switch(selectedAction){
+					case SaveAction::Save:
+						save();
+						break;
+					case SaveAction::Load:
+						load();
+						break;
+				}
 			}else{
 				pop();
 			}
+			break;
+
+		default:
 			break;
 	}
 }
 
 void SaveState::rightEncMove(int8_t amount){
-	ESP_LOGI("SaveState", "pop R enc : %d", amount);
+	ESP_LOGI(TAG, "pop R enc : %d", amount);
 
 	pop();
 }
 
 void SaveState::leftPotMove(uint8_t value){
-	ESP_LOGI("SaveState", "pop L pot");
+	ESP_LOGI(TAG, "pop L pot");
 
 	pop();
 }
 
 void SaveState::rightPotMove(uint8_t value){
-	ESP_LOGI("SaveState", "pop R pot");
+	ESP_LOGI(TAG, "pop R pot");
 
 	pop();
 }
-
-
-

@@ -5,7 +5,7 @@
 #include <Devices/Matrix/MatrixAnimGIF.h>
 
 enum SaveStep{
-	SlotSelect, ActionSelect, Confirmation
+	SlotSelect, ActionSelect, Confirmation, Wait
 };
 
 struct SaveVisData {
@@ -27,6 +27,7 @@ private:
 	MatrixAnimGIF no;
 	MatrixAnimGIF load;
 	MatrixAnimGIF save;
+	MatrixAnimGIF diskette;
 };
 
 
