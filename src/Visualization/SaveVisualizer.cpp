@@ -26,7 +26,7 @@ void SaveVisualizer::visualize(){
 				}
 			}
 			matrix.setFont(Matrix::SMALL);
-			matrix.drawString(13, 5, String(data.selection));
+			matrix.drawString(13, 5, String(data.selection + 1));
 			matrix.push();
 
 			if(!slotAnim.isStarted()){
