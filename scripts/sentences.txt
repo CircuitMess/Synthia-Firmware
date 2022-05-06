@@ -1,0 +1,5 @@
+generic intro <prosody pitch=\"+4st\" volume=\"loud\" rate=\"slow\"> Yay! You made it!  </prosody>  Welcome to Synthia’s hardware test.
+generic buttons Let's start with the buttons. Please press each of them individually. Click both of the knobs as well. I’ll let you know if everything is OK on my end.
+generic sliders Alright, that registers. Next up are the sliders. Move both of them all the way up and then all the way down so I can see if they work OK. Press any of the buttons to let me know you’re done.
+generic knobs Yeah those look alright, they’ll do just fine. Lastly, we have the knobs. I’ll place a dot on the matrix which you can move with the left and right knobs. The right knob will move the dot vertically and the left knob horizontally. Click any button once you’ve tried that out.
+generic outro Your Synthia works perfectly! That's it from me. Hope you enjoy your Synthia! Spencer out!
