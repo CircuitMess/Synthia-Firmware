@@ -10,7 +10,7 @@
 
 struct AudioJob {
 	enum {
-		PLAY, SET, RELEASE
+		PLAY, SET, RELEASE, PAUSE
 	} type;
 	uint8_t slot;
 	SampleSlot* sampleSlot;
@@ -27,6 +27,8 @@ public:
 	void edit(uint8_t slot, EditSlot* editSlot);
 	void block(uint8_t slot);
 	void release(uint8_t slot);
+	void pause();
+	void resume();
 	uint8_t getVolume() const;
 	void setVolume(uint8_t volume);
 
@@ -34,7 +36,9 @@ public:
 
 	const SlotConfig& getConfig(uint8_t slot);
 
+	bool isPaused();
 	bool isPlaying();
+
 private:
 	Mixer mixer;
 	OutputI2S output;
@@ -43,6 +47,7 @@ private:
 
 	Task task;
 	Queue jobs;
+	bool paused = false;
 
 	static void taskFunc(Task* task);
 

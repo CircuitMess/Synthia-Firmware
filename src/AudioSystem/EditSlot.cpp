@@ -59,6 +59,7 @@ Generator& EditSlot::getGenerator(){
 
 void EditSlot::seek(size_t pos, SeekMode mode){
 	playback->seek(pos, mode);
+	speeder.resetBuffers();
 }
 
 SlotConfig EditSlot::getConfig(){

@@ -5,6 +5,7 @@
 #include <Loop/LoopManager.h>
 #include <esp_log.h>
 
+#include "src/JigHWTest/JigHWTest.h"
 #include "src/AudioSystem/PlaybackSystem.h"
 #include "src/Services/SlotPlayer.h"
 #include "src/Visualization/Visualizer.h"
@@ -23,6 +24,11 @@ void initLog(){
 	}
 }
 
+bool checkJig(){
+	//TODO - add jig conditions
+	return false;
+}
+
 void boot(){
 	Playback.begin();
 	Player.begin();
@@ -37,6 +43,12 @@ void setup(){
 	initLog();
 	Synthia.begin();
 
+	if(checkJig()){
+		JigHWTest* test = new JigHWTest();
+		test->start();
+
+		for(;;);
+	}
 
 	RGBTrack.begin(&Synthia.TrackRGB);
 	RGBSlot.begin(&Synthia.SlotRGB);

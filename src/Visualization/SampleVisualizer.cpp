@@ -10,8 +10,9 @@ const char* SampleVisualizer::Anims[] = {
 	"/GIF/Samples/Clap.gif",
 	"/GIF/Samples/HatClos.gif",
 	"/GIF/Samples/HatOpen.gif",
-	"/GIF/Samples/RecOff.gif",
-	"/GIF/Samples/RecOn.gif"
+	"/GIF/Samples/RecWait.gif",
+	"/GIF/Samples/RecIn.gif",
+	"/GIF/Samples/RecOut.gif"
 };
 
 SampleVisualizer::SampleVisualizer(){
@@ -34,8 +35,12 @@ void SampleVisualizer::visualize(){
 
 	auto data = getProp();
 	uint8_t sample = (uint8_t) data.type;
-	if(data.type == Sample::Type::RECORDING && data.recorded){
-		sample++;
+	if(data.type == Sample::Type::RECORDING){
+		if(data.recState == SampleVisData::Recording){
+			sample += 1;
+		}else if(data.recState == SampleVisData::Recorded){
+			sample += 2;
+		}
 	}
 
 	for(int i = 0; i < anims.size(); i++){

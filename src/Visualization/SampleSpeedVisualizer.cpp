@@ -18,8 +18,8 @@ SampleSpeedVisualizer::SampleSpeedVisualizer(){
 
 void SampleSpeedVisualizer::visualize(){
 	auto val = getProp();
-	LEDStrip.setLeftFromCenter((int8_t)((int)(val) - 128));
-	LEDStrip.setMidFillFromCenter((int8_t)((int)(val) - 128));
+	LEDStrip.setLeftFromCenter((int8_t)((int)(val) - 127));
+	LEDStrip.setMidFillFromCenter((int8_t)((int)(val) - 127));
 }
 
 void SampleSpeedVisualizer::onStart(){

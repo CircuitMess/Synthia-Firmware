@@ -2,6 +2,15 @@
 
 SaveManager saveManager;
 
+SaveData SaveManager::defaultData;
+
+SaveManager::SaveManager(){
+	for(int i = 0; i < 5; i++){
+		defaultData.slots[i].sample.type = (Sample::Type) i;
+		defaultData.slots[i].slotIndex = i;
+	}
+}
+
 SaveData SaveManager::load(uint8_t trackSlot, bool saveLastEdited){
 	const String rootPath = "/Save/" + String(trackSlot) + "/";
 
@@ -14,13 +23,14 @@ SaveData SaveManager::load(uint8_t trackSlot, bool saveLastEdited){
 	File saveFile = SPIFFS.open(path);
 	if(!saveFile){
 		ESP_LOGE("SaveManager", "Couldn't open save saveFile: %s", path.c_str());
-		return SaveData{};
+
+		return defaultData;
 	}
 	SaveData data;
 	size_t read = saveFile.read((uint8_t*)&data, sizeof(SaveData));
 	if(read != sizeof(SaveData)){
 		ESP_LOGE("SaveManager", "Couldn't read save saveFile: %lu", read);
-		return SaveData{};
+		return defaultData;
 	}
 	saveFile.close();
 
