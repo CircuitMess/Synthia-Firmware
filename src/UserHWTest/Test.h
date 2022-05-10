@@ -12,7 +12,7 @@ namespace UserHWTest {
 	friend State;
 
 	public:
-		Test(void (*doneCallback)());
+		Test();
 		virtual ~Test();
 
 		void start();
@@ -27,7 +27,6 @@ namespace UserHWTest {
 		State* state = nullptr;
 
 		void testDone();
-		void (*doneCallback)();
 
 		void showText(std::string text);
 		void clearText();
@@ -37,6 +36,8 @@ namespace UserHWTest {
 
 		MatrixAnimGIF talkAnim;
 		void talk();
+
+		void exit();
 
 	};
 }

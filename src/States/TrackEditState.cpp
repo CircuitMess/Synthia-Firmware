@@ -209,11 +209,8 @@ void TrackEditState::launchTest(){
 	Player.disable();
 	Playback.stop();
 
-	auto test = new UserHWTest::Test([](){
-		Settings.get().tested = true;
-		Settings.store();
+	Synthia.clearMatrices();
 
-		ESP.restart();
-	});
+	auto test = new UserHWTest::Test();
 	test->start();
 }

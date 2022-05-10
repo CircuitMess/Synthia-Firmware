@@ -18,8 +18,8 @@ UserHWTest::State* (*UserHWTest::Test::LaunchState[])(UserHWTest::Test* test) = 
 };
 
 
-UserHWTest::Test::Test(void (* doneCallback)()) : doneCallback(doneCallback), talkAnim(RamFile::open(SPIFFS.open("/talk.gif")), &Synthia.TrackMatrix){
-	playback.setVolume(255);
+UserHWTest::Test::Test() : talkAnim(RamFile::open(SPIFFS.open("/talk.gif")), &Synthia.TrackMatrix){
+	playback.setVolume(50);
 }
 
 UserHWTest::Test::~Test(){
@@ -48,19 +48,7 @@ void UserHWTest::Test::testDone(){
 
 	stateIndex++;
 	if(stateIndex == sizeof(LaunchState) / sizeof(LaunchState[0])){
-		LoopManager::removeListener(this);
-
-		Synthia.TrackMatrix.push();
-
-		Synthia.SlidersMatrix.clear();
-		Synthia.SlidersMatrix.push();
-
-		Synthia.SlotRGB.clear();
-		Synthia.SlotRGB.push();
-
-		playback.stop();
-
-		doneCallback();
+		exit();
 		return;
 	}
 
@@ -111,4 +99,14 @@ void UserHWTest::Test::loop(uint micros){
 void UserHWTest::Test::talk(){
 	clearText();
 	Synthia.TrackMatrix.startAnimation(&talkAnim);
+}
+
+void UserHWTest::Test::exit(){
+	Settings.get().tested = true;
+	Settings.store();
+
+	Synthia.clearMatrices();
+	playback.stop();
+
+	ESP.restart();
 }

@@ -45,13 +45,7 @@ void setup(){
 	RGBSlot.begin(&Synthia.SlotRGB);
 
 	if(!Settings.get().tested){
-		auto test = new UserHWTest::Test([](){
-			Settings.get().tested = true;
-			Settings.store();
-
-			ESP.restart();
-		});
-
+		auto test = new UserHWTest::Test();
 		test->start();
 		return;
 	}
