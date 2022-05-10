@@ -5,9 +5,9 @@
 #include "LEDStrip.h"
 
 SampleSpeedVisualizer::SampleSpeedVisualizer(){
-	File f = SPIFFS.open("/GIF/Speed.gif");
+	File f = SPIFFS.open("/GIF/Pitch.gif");
 	if(!f){
-		ESP_LOGE("SampleVis", "Can't open /GIF/Speed.gif");
+		ESP_LOGE("SampleVis", "Can't open /GIF/Pitch.gif");
 		return;
 	}
 	f = RamFile::open(f);
