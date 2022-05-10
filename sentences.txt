@@ -1,0 +1,7 @@
+intro <prosody pitch=\"+4st\" volume=\"loud\" rate=\"slow\">Yay!</prosody><prosody pitch=\"+2st\" volume=\"loud\" rate=\"slow\">You made it!</prosody> I'm Spencer. Nice to meet you! I'll guide you through Synthia’s hardware test.
+intro2 <prosody pitch=\"+2st\" volume=\"loud\" rate=\"slow\">Well, hello again!</prosody> Spencer here! Let's go through the hardware test together.
+buttons Let's start with the buttons. Please press each of them individually. Click both of the knobs as well. I’ll let you know if everything is OK on my end.
+sliders Alright, that registers. Next up are the sliders. Move both of them all the way up and then all the way down so I can see if they work OK. Press any of the buttons to let me know you’re done.
+knobs Yeah,<break time=\"200ms\"/>those look alright,<break time=\"200ms\"/>they’ll do just fine!<break time=\"400ms\"/>Lastly, we have the knobs. I’ll place a dot on the matrix which you can move with the left and right knob. The right knob will move the dot vertically and the left knob horizontally. Click any button once you’ve tried that out.
+brightness <prosody pitch=\"+2st\" volume=\"loud\" rate=\"slow\">Great!</prosody> Your Synthia works perfectly! I'll now let you adjust the brightness of the LED matrix. Move the right slider up and down to adjust it. Press a button when you're satisfied.
+outro Alright, that's it from me! You can enter this test any time by pressing both knobs at the same time while in the track edit mode. Hope you enjoy your Synthia! Spencer out!

@@ -6,18 +6,22 @@ set -e -o pipefail
 # requires ffmpeg and jq installed
 
 # Google TTS api key
-KEY=
+KEY=AIzaSyCtACC9XGTVwjzq2bW9OMX5FtAZxD3ee0U
+dir="data/HWTestSamples"
+
+[ ! -f "sentences.txt" ] && echo "Execute this script from project root." && exit 1
+
+rm -rf "$dir"
+mkdir -p "$dir"
 
 while IFS= read -r sentence; do
-  dir=$(echo "$sentence" | cut -d " " -f1)
-  name=$(echo "$sentence" | cut -d " " -f2)
-  sentence=$(echo "$sentence" | tail -c +$(expr ${#dir} + ${#name} + 3))
-  mkdir -p "data/$dir"
+  name=$(echo "$sentence" | cut -d " " -f1)
+  sentence=$(echo "$sentence" | tail -c +$(expr ${#name} + 2))
   echo "$dir/$name: $sentence"
   curl -s --location --request POST "https://texttospeech.googleapis.com/v1/text:synthesize?key=$KEY" \
     --header "Content-Type: application/json" \
     --data-raw '{
-    "input": { "ssml": "'"$sentence"'" },
+    "input": { "ssml": "<speak>'"$sentence"'</speak>" },
     "voice": {
         "languageCode": "en-US",
         "name": "en-US-Standard-D",
@@ -25,9 +29,9 @@ while IFS= read -r sentence; do
     },
     "audioConfig": {
         "audioEncoding": "MP3",
-        "speakingRate": 0.96,
+        "speakingRate": 1.05,
         "pitch": 5.5,
-        "sampleRateHertz": 16000
+        "sampleRateHertz": 24000
     }
-  }' | jq -r '.audioContent' | base64 -d  | ffmpeg -loglevel quiet -f mp3 -i pipe: -c:a libmp3lame -b:a 24k "data/$dir/$name.mp3"
+  }' | jq -r '.audioContent' | base64 -d  | ffmpeg -loglevel quiet -f mp3 -i pipe: -af "apad=pad_dur=0.5" -codec:a aac -b:a 64k -ac 1 -ar 24000 "$dir/$name.aac"
 done < sentences.txt
