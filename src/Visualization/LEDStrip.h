@@ -18,6 +18,18 @@ public:
 	void setRight(uint8_t value);
 
 	/**
+	 * Turns on a single LED on the left slider LED strip
+	 * @param value Value to be represented on the strip
+	 */
+	void setLeftSingle(uint8_t value);
+
+	/**
+	 * Turns on a single LED on the right slider LED strip
+	 * @param value Value to be represented on the strip
+	 */
+	void setRightSingle(uint8_t value);
+
+	/**
 	 * Sets the fill for the left slider LED strip, starting from the middle
 	 * Negative values fill from the center downwards, positive values fill from the center upwards
 	 * @param value Amount to be filled from the center (-127 to 128)
@@ -60,6 +72,7 @@ public:
 private:
 	void setStrip(uint8_t value, uint8_t x);
 	void setStripFromCenter(int8_t value, uint8_t x);
+	void setStripSingle(uint8_t value, uint8_t x);
 
 };
 

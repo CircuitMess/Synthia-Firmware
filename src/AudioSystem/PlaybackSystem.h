@@ -20,6 +20,7 @@ class PlaybackSystem {
 public:
 	PlaybackSystem();
 	void begin();
+	void stop();
 
 	void play(uint8_t slot);
 
@@ -37,6 +38,7 @@ public:
 	const SlotConfig& getConfig(uint8_t slot);
 
 	bool isPaused();
+	bool isPlaying();
 
 private:
 	Mixer mixer;

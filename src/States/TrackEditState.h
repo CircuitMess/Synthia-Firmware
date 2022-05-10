@@ -49,6 +49,10 @@ private:
 
 	void pushTrackVis();
 	void buttonReleased(uint i) override;
+
+	uint32_t encPressTimes[2] = { 0, 0 };
+	void launchTest();
+
 };
 
 

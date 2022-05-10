@@ -12,6 +12,7 @@
 #include "src/Visualization/RGBController.h"
 #include "src/States/State.h"
 #include "src/States/Intro.h"
+#include "src/UserHWTest/Test.h"
 
 void initLog(){
 	esp_log_level_set("*", ESP_LOG_NONE);
@@ -40,12 +41,20 @@ void setup(){
 		for(;;);
 	}
 
+	RGBTrack.begin(&Synthia.TrackRGB);
+	RGBSlot.begin(&Synthia.SlotRGB);
+
+	if(!Settings.get().tested){
+		auto test = new UserHWTest::Test();
+		test->start();
+		return;
+	}
+
 	Playback.begin();
 	Player.begin();
 	VMan.begin();
 
-	RGBTrack.begin(&Synthia.TrackRGB);
-	RGBSlot.begin(&Synthia.SlotRGB);
+	LoopManager::removeListener(Synthia.getInput());
 
 	State* state = new Intro();
 	state->start();

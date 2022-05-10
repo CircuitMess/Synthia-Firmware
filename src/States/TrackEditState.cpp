@@ -6,6 +6,8 @@
 #include "PlaybackState.h"
 #include "SampleEditState.h"
 #include "../Visualization/RGBController.h"
+#include "../UserHWTest/Test.h"
+#include "../Services/SlotPlayer.h"
 
 uint8_t TrackEditState::cursor = 0;
 
@@ -123,6 +125,10 @@ void TrackEditState::buttonHeld(uint i){
 }
 
 void TrackEditState::buttonReleased(uint i){
+	if(i == BTN_ENC_L || i == BTN_ENC_R){
+		encPressTimes[0] = encPressTimes[1] = 0;
+	}
+
 	int slot = Synthia.btnToSlot(i);
 	if(i == -1) return;
 	slotEraser[slot] = false;
@@ -156,6 +162,20 @@ void TrackEditState::doubleClick(uint8_t i){
 }
 
 void TrackEditState::buttonPressed(uint i){
+	if(i == BTN_ENC_L){
+		encPressTimes[0] = millis();
+		if(encPressTimes[1] != 0 && encPressTimes[0] - encPressTimes[1] < 100){
+			launchTest();
+			return;
+		}
+	}else if(i == BTN_ENC_R){
+		encPressTimes[1] = millis();
+		if(encPressTimes[0] != 0 && encPressTimes[1] - encPressTimes[0] < 100){
+			launchTest();
+			return;
+		}
+	}
+
 	int slot = Synthia.btnToSlot(i);
 
 	if(slot == -1){
@@ -180,4 +200,17 @@ void TrackEditState::buttonPressed(uint i){
 
 void TrackEditState::pushTrackVis(){
 	trackVis.push({ track.timeline, cursor });
+}
+
+void TrackEditState::launchTest(){
+	stop();
+	delete this;
+
+	Player.disable();
+	Playback.stop();
+
+	Synthia.clearMatrices();
+
+	auto test = new UserHWTest::Test();
+	test->start();
 }
