@@ -12,7 +12,7 @@
 #include "src/Visualization/RGBController.h"
 #include "src/States/State.h"
 #include "src/States/Intro.h"
-#include "src/States/UserHWTest.h"
+#include "src/UserHWTest/Test.h"
 
 void initLog(){
 	esp_log_level_set("*", ESP_LOG_NONE);
@@ -27,15 +27,6 @@ void initLog(){
 bool checkJig(){
 	//TODO - add jig conditions
 	return false;
-}
-
-void boot(){
-	Playback.begin();
-	Player.begin();
-	VMan.begin();
-
-	State* state = new Intro();
-	state->start();
 }
 
 void setup(){
@@ -54,17 +45,25 @@ void setup(){
 	RGBSlot.begin(&Synthia.SlotRGB);
 
 	if(!Settings.get().tested){
-		auto test = new UserHWTest([](){
+		auto test = new UserHWTest::Test([](){
 			Settings.get().tested = true;
 			Settings.store();
-			boot();
+
+			ESP.restart();
 		});
 
 		test->start();
 		return;
 	}
 
-	boot();
+	Playback.begin();
+	Player.begin();
+	VMan.begin();
+
+	LoopManager::removeListener(Synthia.getInput());
+
+	State* state = new Intro();
+	state->start();
 }
 
 void loop(){
