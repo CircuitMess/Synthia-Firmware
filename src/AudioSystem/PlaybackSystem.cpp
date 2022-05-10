@@ -35,6 +35,10 @@ void PlaybackSystem::begin(){
 	task.start(1, 0);
 }
 
+void PlaybackSystem::stop(){
+	task.stop(true);
+}
+
 void PlaybackSystem::block(uint8_t slot){
 	if(!task.running) return;
 

@@ -20,6 +20,7 @@ class PlaybackSystem {
 public:
 	PlaybackSystem();
 	void begin();
+	void stop();
 
 	void play(uint8_t slot);
 
