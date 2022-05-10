@@ -2,10 +2,11 @@
 #define SYNTHIA_FIRMWARE_OUTRO_H
 
 #include <Loop/LoopListener.h>
+#include <Input/InputListener.h>
 #include "../State.h"
 
 namespace UserHWTest {
-	class Outro : public State, public LoopListener {
+	class Outro : public State, public LoopListener, private InputListener {
 	public:
 		Outro(Test* test);
 
@@ -13,6 +14,10 @@ namespace UserHWTest {
 		void stop() override;
 
 		void loop(uint micros) override;
+
+	private:
+		void buttonPressed(uint i) override;
+
 	};
 }
 
