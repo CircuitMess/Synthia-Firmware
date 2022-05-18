@@ -13,7 +13,6 @@ void UserHWTest::Sliders::start(){
 	talk();
 
 	Settings.get().calibration = SlidersCalibration();
-	Settings.store();
 
 	showL.max = showL.min = ::Sliders.getLeftPotValue();
 	lightSlider(0);
@@ -77,6 +76,8 @@ void UserHWTest::Sliders::loop(uint micros){
 		if(sliderR.min == -1 || sliderSamplesR < sliderR.min){
 			sliderR.min = sliderSamplesR;
 		}
+
+		sliderSamplesL = sliderSamplesR = 0;
 	}
 
 	if(isPlaying() || state != Talking) return;
@@ -119,23 +120,17 @@ void UserHWTest::Sliders::lightSlider(uint8_t index){
 	}
 
 	for(int i = 0, prog = 0; i < 8; i++, prog += 256){
-		if(i == 7) printf("A %d %d %d\n", prog, val.max, val.min);
 		if(prog + 256 <= val.min){
-			if(i == 7) printf("A %d %d %d\n", prog, val.max, val.min);
 			// skip
 		}else if(prog <= val.min && val.min < prog + 256){
 			uint8_t rest = prog + 250 - val.min;
-			if(i == 7) printf("B %d %d %d %d\n", prog, val.max, val.min, rest);
 			Synthia.SlidersMatrix.drawPixel(index, 7 - i, { 255, 255, 255, rest });
 		}else if(prog + 256 <= val.max){
-			if(i == 7) printf("C %d %d %d\n", prog, val.max, val.min);
 			Synthia.SlidersMatrix.drawPixel(index, 7 - i, MatrixPixel::White);
 		}else if(prog <= val.max && val.max <= prog + 256){
 			uint8_t rest = val.max - prog;
-			if(i == 7) printf("D %d %d %d %d\n", prog, val.max, val.min, rest);
 			Synthia.SlidersMatrix.drawPixel(index, 7 - i, { 255, 255, 255, rest });
 		}else if(prog > val.max){
-			if(i == 7) printf("E %d %d %d\n", prog, val.max, val.min);
 			// skip
 		}
 	}
