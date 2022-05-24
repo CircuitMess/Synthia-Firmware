@@ -37,7 +37,7 @@ SampleEditState::SampleEditState(State* parent, uint8_t slot) : State(parent), s
 		}
 	}, 4096, this);
 
-	setButtonHoldTime(Synthia.slotToBtn(slot), 500);
+	setButtonHoldTime(Synthia.slotToBtn(slot), 1000);
 }
 
 SampleEditState::~SampleEditState(){

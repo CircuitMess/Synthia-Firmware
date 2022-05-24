@@ -13,7 +13,7 @@ uint8_t TrackEditState::cursor = 0;
 
 TrackEditState::TrackEditState(){
 	for(uint8_t i = 0; i < 5; i++){
-		setButtonHoldTime(Synthia.slotToBtn(i), 500);
+		setButtonHoldTime(Synthia.slotToBtn(i), 1000);
 	}
 
 	setButtonHoldTime(BTN_ENC_R, 500);
