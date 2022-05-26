@@ -75,6 +75,8 @@ void SampleEditState::onStart(){
 	LEDStrip.setRight(config.effects[(size_t) selectedEffect].intensity);
 
 	RGBTrack.playAnim(RGBController::SampleEdit);
+
+	Playback.setVolume(255);
 }
 
 void SampleEditState::onStop(){
