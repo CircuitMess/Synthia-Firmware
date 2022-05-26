@@ -5,6 +5,7 @@
 #include "../AudioSystem/SlotBaker.h"
 #include "../Visualization/LEDStrip.h"
 #include "../Services/SlotPlayer.h"
+#include "../Timeout.h"
 
 SampleEditState::SampleEditState(State* parent, uint8_t slot) : State(parent), slot(slot), config(Playback.getConfig(slot)){
 	config.sample.fileIndex = config.slotIndex = slot;
@@ -315,6 +316,9 @@ void SampleEditState::saveRecording(SlotConfig* other){
 		state->editSlot = new EditSlot(state->config, f);
 	}, 4096, data);
 
+	RGBTrack.stopAnim();
+	RGBTrack.clear();
+
 	RGBSlot.clear();
 	RGBSlot.setSolid(slot, MatrixPixel::Yellow);
 	LEDStrip.setMidFill(0);
@@ -334,4 +338,11 @@ void SampleEditState::saveRecording(SlotConfig* other){
 
 	recorded = true;
 	sampleVis.push({ config.sample.type, SampleVisData::Recorded });
+
+	Playback.play(slot);
+	RGBSlot.blinkTwice(slot, MatrixPixel::Red);
+	RGBTrack.blinkAllTwice(MatrixPixel::Red);
+	new Timeout(600, [](){
+		RGBTrack.playAnim(RGBController::SampleEdit);
+	});
 }
