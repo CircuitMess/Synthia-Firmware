@@ -19,7 +19,7 @@ UserHWTest::State* (*UserHWTest::Test::LaunchState[])(UserHWTest::Test* test) = 
 
 
 UserHWTest::Test::Test() : talkAnim(RamFile::open(SPIFFS.open("/talk.gif")), &Synthia.TrackMatrix){
-	playback.setVolume(50);
+	playback.setVolume(150);
 }
 
 UserHWTest::Test::~Test(){
