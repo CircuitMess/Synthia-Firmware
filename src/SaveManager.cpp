@@ -1,6 +1,7 @@
 #include "SaveManager.h"
 #include "AudioSystem/Transcoder.h"
 #include "AudioSystem/PlaybackSystem.h"
+#include "Visualization/RGBController.h"
 
 SaveManager saveManager;
 
@@ -54,6 +55,8 @@ SaveData SaveManager::load(uint8_t trackSlot, bool saveLastEdited){
 		saveLast(trackSlot);
 	}
 
+	RGBSlot.clear();
+
 	return data;
 }
 
@@ -76,6 +79,8 @@ void SaveManager::store(uint8_t trackSlot, SaveData data, bool saveLastEdited){
 	if(saveLastEdited){
 		saveLast(trackSlot);
 	}
+
+	RGBSlot.clear();
 }
 
 void SaveManager::copyFile(File& source, File& destination){
@@ -122,6 +127,8 @@ void IRAM_ATTR SaveManager::loadRecordings(File& source, File& destination){
 
 		SPIFFS.remove(dstPath);
 
+		RGBSlot.setSolid(i, MatrixPixel::Blue);
+
 		file = SPIFFS.open(srcPath);
 		if(!file){
 			continue;
@@ -159,6 +166,8 @@ void IRAM_ATTR SaveManager::storeRecordings(File& source, File& destination){
 		String dstPath = dstDir + i + ".aac";
 
 		SPIFFS.remove(dstPath);
+
+		RGBSlot.setSolid(i, MatrixPixel::Blue);
 
 		file = SPIFFS.open(srcPath);
 		if(!file){

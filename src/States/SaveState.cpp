@@ -5,6 +5,7 @@
 #include <Loop/LoopManager.h>
 #include "../Visualization/LEDStrip.h"
 #include "../Services/SlotPlayer.h"
+#include "../Visualization/RGBController.h"
 
 uint8_t SaveState::currentSaveSlot = 0;
 static const char* TAG = "SaveState";
@@ -30,6 +31,11 @@ void SaveState::loop(uint micros){
 		}else if(selectedAction == SaveAction::Load && myTask){
 			if(myTask->isStopped() && baker){
 				if(!baker->isDone() && !baker->isBaking()){
+					baker->setOneDoneCallback([](uint8_t slot){
+						if(slot == 4) return;
+						RGBSlot.setSolid(slot+1, MatrixPixel::Green);
+					});
+					RGBSlot.setSolid(0, MatrixPixel::Green);
 					baker->start();
 				}else if(baker->isDone()){
 					auto files = baker->getFiles();
@@ -39,9 +45,12 @@ void SaveState::loop(uint micros){
 					}
 					delete baker;
 					trackEdit->setTrack(saveData.track);
+					RGBSlot.clear();
 					pop();
+					return;
 				}
 			}
+			delay(10);
 		}
 	}
 
