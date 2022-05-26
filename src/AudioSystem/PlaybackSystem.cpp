@@ -30,8 +30,6 @@ PlaybackSystem::PlaybackSystem() : output(i2s_config, i2s_pin_config, I2S_NUM_0)
 void PlaybackSystem::begin(){
 	if(task.running) return;
 
-	setVolume(Sliders.getRightPotValue());
-
 	task.start(1, 0);
 }
 
@@ -101,6 +99,8 @@ void PlaybackSystem::taskFunc(Task* task){
 
 		if(system->output.isRunning() && !system->paused){
 			system->output.loop(0);
+		}else{
+			delay(5);
 		}
 
 		vTaskDelay(1);
