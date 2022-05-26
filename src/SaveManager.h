@@ -7,6 +7,8 @@
 class SaveManager {
 public:
 	SaveManager();
+	void begin();
+
 	SaveData load(uint8_t trackSlot, bool saveLastEdited = false);
 	void store(uint8_t trackSlot, SaveData config,  bool saveLastEdited = false);
 	SaveData loadLast();

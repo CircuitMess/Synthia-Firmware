@@ -13,6 +13,7 @@
 #include "src/States/State.h"
 #include "src/States/Intro.h"
 #include "src/UserHWTest/Test.h"
+#include "src/SaveManager.h"
 
 void initLog(){
 	esp_log_level_set("*", ESP_LOG_NONE);
@@ -53,6 +54,7 @@ void setup(){
 	Playback.begin();
 	Player.begin();
 	VMan.begin();
+	saveManager.begin();
 
 	LoopManager::removeListener(Synthia.getInput());
 

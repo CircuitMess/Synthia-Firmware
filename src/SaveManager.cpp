@@ -13,6 +13,11 @@ SaveManager::SaveManager(){
 	}
 }
 
+void SaveManager::begin(){
+	File recordings = SPIFFS.open("/Recordings/");
+	clearFolder(recordings);
+}
+
 SaveData SaveManager::load(uint8_t trackSlot, bool saveLastEdited){
 	const String rootPath = "/Save/" + String(trackSlot) + "/";
 
