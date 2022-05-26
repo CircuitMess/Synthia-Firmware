@@ -1,4 +1,6 @@
 #include "SaveManager.h"
+#include "AudioSystem/Transcoder.h"
+#include "AudioSystem/PlaybackSystem.h"
 
 SaveManager saveManager;
 
@@ -34,9 +36,11 @@ SaveData SaveManager::load(uint8_t trackSlot, bool saveLastEdited){
 	}
 	saveFile.close();
 
-	//copy over recordings from saved track
 	File saveFolder = SPIFFS.open(rootPath);
-	copyFolder(saveFolder, recordings);
+
+	Playback.stop();
+	loadRecordings(saveFolder, recordings);
+	Playback.begin();
 
 	saveFolder.close();
 	recordings.close();
@@ -59,7 +63,10 @@ void SaveManager::store(uint8_t trackSlot, SaveData data, bool saveLastEdited){
 	savedata.close();
 
 	File recordings = SPIFFS.open("/Recordings/");
-	copyFolder(recordings, saveFolder);
+
+	Playback.stop();
+	storeRecordings(recordings, saveFolder);
+	Playback.begin();
 
 	if(saveLastEdited){
 		saveLast(trackSlot);
@@ -78,10 +85,90 @@ void SaveManager::copyFile(File& source, File& destination){
 void SaveManager::clearFolder(File& folder){
 	if(!folder.isDirectory()) return;
 	String path = folder.name();
+	if(!path.endsWith("/")){
+		path += "/";
+	}
 
 	SPIFFS.remove(path + "data.sav");
 	for(uint8_t i = 0; i < 5; i++){
+		SPIFFS.remove(path + i + ".wav");
 		SPIFFS.remove(path + i + ".aac");
+	}
+}
+
+void IRAM_ATTR SaveManager::loadRecordings(File& source, File& destination){
+	if(!(source.isDirectory() && destination.isDirectory())) return;
+
+	String srcDir = String(source.name());
+	String dstDir = String(destination.name());
+
+	if(!srcDir.endsWith("/")){
+		srcDir += "/";
+	}
+	if(!dstDir.endsWith("/")){
+		dstDir += "/";
+	}
+
+	File file;
+	File copy;
+	for(uint8_t i = 0; i < 5; i++){
+		String srcPath = srcDir + i + ".aac";
+		String dstPath = dstDir + i + ".wav";
+
+		SPIFFS.remove(dstPath);
+
+		file = SPIFFS.open(srcPath);
+		if(!file){
+			continue;
+		}
+
+		copy = SPIFFS.open(dstPath, FILE_WRITE);
+
+		uint32_t time = millis();
+		Transcoder transcoder(AAC2WAV, file, copy);
+		transcoder.start();
+		while(!transcoder.isDone()){
+			delay(1);
+		}
+		ESP_LOGI("SaveManager", "Load transcode done in %d ms\n", millis() - time);
+	}
+}
+
+void IRAM_ATTR SaveManager::storeRecordings(File& source, File& destination){
+	if(!(source.isDirectory() && destination.isDirectory())) return;
+
+	String srcDir = String(source.name());
+	String dstDir = String(destination.name());
+
+	if(!srcDir.endsWith("/")){
+		srcDir += "/";
+	}
+	if(!dstDir.endsWith("/")){
+		dstDir += "/";
+	}
+
+	File file;
+	File copy;
+	for(uint8_t i = 0; i < 5; i++){
+		String srcPath = srcDir + i + ".wav";
+		String dstPath = dstDir + i + ".aac";
+
+		SPIFFS.remove(dstPath);
+
+		file = SPIFFS.open(srcPath);
+		if(!file){
+			continue;
+		}
+
+		copy = SPIFFS.open(dstPath, FILE_WRITE);
+
+		uint32_t time = millis();
+		Transcoder transcoder(WAV2AAC, file, copy);
+		transcoder.start();
+		while(!transcoder.isDone()){
+			delay(1);
+		}
+		ESP_LOGI("SaveManager", "Transcode done is %d ms\n", millis() - time);
 	}
 }
 
@@ -101,8 +188,8 @@ void SaveManager::copyFolder(File& source, File& destination){
 	File file;
 	File copy;
 	for(uint8_t i = 0; i < 5; i++){
-		String srcPath = srcDir + i + ".aac";
-		String dstPath = dstDir + i + ".aac";
+		String srcPath = srcDir + i + ".wav";
+		String dstPath = dstDir + i + ".wav";
 
 		SPIFFS.remove(dstPath);
 

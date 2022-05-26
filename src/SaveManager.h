@@ -14,6 +14,8 @@ public:
 private:
 	void copyFile(File& source, File& destination);
 	void clearFolder(File& folder);
+	void storeRecordings(File& source, File& destination);
+	void loadRecordings(File& source, File& destination);
 	void copyFolder(File& source, File& destination);
 	void saveLast(uint8_t trackSlot);
 	uint8_t getLast();
