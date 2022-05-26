@@ -112,31 +112,27 @@ void SampleEditState::buttonHeld(uint i){
 	RGBTrack.stopAnim();
 	RGBSlot.clear();
 
-	Task bake("SampleEdit-Bake", [](Task* task){
-		SampleEditState* state = static_cast<SampleEditState*>(task->arg);
 
-		Playback.release(state->slot);
-		while(Playback.getSlot(state->slot) != nullptr){
-			delay(1);
-		}
-
-		File file = RamFile::create();
-		SlotBaker baker(state->editSlot, file);
-		baker.start();
-		while(!baker.isDone()){
-			delay(1);
-		}
-
-		Playback.set(state->slot, file, state->config);
-	}, 4096, this);
-	bake.start(1, 0);
 
 	MatrixAnimGIF outro(SPIFFS.open("/GIF/TrackEdit.gif"), &Synthia.TrackMatrix);
 	outro.getGIF().setLoopMode(GIF::SINGLE);
 	outro.start();
-	while(bake.running || outro.isStarted()){
+
+	Playback.release(slot);
+	while(Playback.getSlot(slot) != nullptr){
 		outro.loop(0);
 	}
+
+	File file = RamFile::create();
+	SlotBaker baker(editSlot, file);
+
+	Playback.stop();
+	baker.start();
+	while(!baker.isDone() || outro.isStarted()){
+		outro.loop(0);
+	}
+	Playback.begin();
+	Playback.set(slot, file, config);
 
 	delete editSlot;
 	editSlot = nullptr;
