@@ -3,19 +3,24 @@
 #include "PlaybackSystem.h"
 #include "SlotBaker.h"
 
-Baker::Baker(const std::array<SlotConfig, 5>& configs) : configs(configs),
-												   task("SlotBaker", [](Task* task){ static_cast<Baker*>(task->arg)->prepare();}, 8192, this){
-
+Baker::Baker(const std::array<SlotConfig, 5>& configs) : configs(configs){
 
 }
 
 void Baker::start(){
 	if(state != WAITING) return;
-	state = PREPARING;
+	state = BAKING;
 
+	for(int i = 0; i < 5; i++){
+		slotFiles[i] = RamFile::create();
+	}
+
+	editSlot = new EditSlot(configs[0], openSample(configs[0]));
+	baker = new SlotBaker(editSlot, slotFiles[0]);
+
+	baker->start();
 
 	ESP_LOGI("Baker", "Start baking all five slots");
-	task.start(1, 0);
 
 	// Preparing is done on core 0
 	// Baking is done using SlotBakers which each start a task on core 0 => checking is done on main thread
@@ -24,77 +29,43 @@ void Baker::start(){
 }
 
 void Baker::loop(uint micros){
-	if(state == DONE){
-		LoopManager::removeListener(this);
-		cleanup();
-		return;
-	}else if(state == PREPARING){
-		// see comment above
-		return;
-	}else if(state != BAKING){
+	if(state != BAKING || baker == nullptr){
 		LoopManager::removeListener(this);
 		return;
 	}
 
-	if(baked == 5){
-		state = DONE;
-		cleanup();
-		return;
-	}
+	if(baker->isDone()){
+		delete baker;
+		delete editSlot;
 
-	if(slotBakers[baked]->isDone()){
+		if(oneDoneCallback){
+			oneDoneCallback(baked);
+		}
+
 		baked++;
 		if(baked == 5){
-			state = DONE;
+			baker = nullptr;
+			editSlot = nullptr;
+
 			LoopManager::removeListener(this);
-			cleanup();
+
+			state = DONE;
 			return;
 		}
-		slotBakers[baked]->start();
+
+		editSlot = new EditSlot(configs[baked], openSample(configs[baked]));
+		baker = new SlotBaker(editSlot, slotFiles[baked]);
+
+		baker->start();
 	}
-}
-
-void Baker::prepare(){
-
-	prepareSamples();
-
-	slotBakers[0]->start();
-	state = BAKING;
 }
 
 bool Baker::isBaking(){
-	return state == BAKING || state == PREPARING;
+	return state == BAKING;
 }
 
 bool Baker::isDone(){
 	return state == DONE;
-}
-
-void Baker::prepareSamples(){
-	//open ramfile and start bake process for all five slots
-	for(uint8_t i = 0; i < 5; i++){
-		auto config = configs[i];
-		auto file = RamFile::create();
-
-		File sampleFile = openSample(config);
-		auto editSlot = new EditSlot(config, RamFile::open(sampleFile));
-		sampleFile.close();
-
-		auto slotbaker = new SlotBaker(editSlot, file);
-
-		slotFiles[i] = file;
-		editSlots[i] = editSlot;
-		slotBakers[i] = slotbaker;
-	}
-}
-
-void Baker::cleanup(){
-	for(uint8_t i = 0; i < 5; i++){
-		delete editSlots[i];
-		delete slotBakers[i];
-		editSlots[i] = nullptr;
-		slotBakers[i] = nullptr;
-	}
 }
 
 std::array<File, 5> Baker::getFiles(){
@@ -103,4 +74,8 @@ std::array<File, 5> Baker::getFiles(){
 
 std::array<SlotConfig, 5> Baker::getConfigs(){
 	return configs;
+}
+
+void Baker::setOneDoneCallback(const std::function<void(uint8_t)>& oneDoneCallback){
+	Baker::oneDoneCallback = oneDoneCallback;
 }

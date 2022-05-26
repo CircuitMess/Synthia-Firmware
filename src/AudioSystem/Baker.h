@@ -5,6 +5,7 @@
 #include <array>
 #include <Util/Task.h>
 #include <Loop/LoopListener.h>
+#include <functional>
 
 class SlotBaker;
 class EditSlot;
@@ -18,23 +19,23 @@ public:
 	void loop(uint micros) override;
 	std::array<File, 5> getFiles();
 	std::array<SlotConfig, 5> getConfigs();
+	void setOneDoneCallback(const std::function<void(uint8_t)>& oneDoneCallback);
 
 private:
 	std::array<SlotConfig, 5> configs;
-	SlotBaker* slotBakers[5] = { nullptr };
 	std::array<File, 5> slotFiles;
-	EditSlot* editSlots[5] = { nullptr };
+
+	SlotBaker* baker = nullptr;
+	EditSlot* editSlot = nullptr;
+
 	uint8_t baked = 0;
 
-	Task task;
-
 	enum {
-		WAITING, PREPARING, BAKING, DONE
+		WAITING, BAKING, DONE
 	} state = WAITING;
 
-	void prepare();
-	void prepareSamples();
-	void cleanup();
+	std::function<void(uint8_t)> oneDoneCallback;
+
 };
 
 
