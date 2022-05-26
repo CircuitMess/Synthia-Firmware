@@ -36,8 +36,8 @@ private:
 	uint8_t selection = 0;
 	uint8_t selectedSlot = 0;
 	enum class SaveAction{
-		Save, Load
-	} selectedAction = SaveAction::Save;
+		Load, Save
+	} selectedAction = SaveAction::Load;
 
 	static uint8_t currentSaveSlot;
 

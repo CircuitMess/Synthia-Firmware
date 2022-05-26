@@ -90,7 +90,7 @@ void SaveState::save(){
 
 	currentSaveSlot = selectedSlot;
 
-	visualizer.push({ step, 0 });
+	visualizer.push({ step, 1 });
 
 	saveData.track = trackEdit->getTrack();
 	for(uint8_t i = 0; i < 5; ++i){
@@ -114,7 +114,7 @@ void SaveState::load(){
 	ESP_LOGI(TAG, "loading...");
 
 	currentSaveSlot = selectedSlot;
-	visualizer.push({ step, 1 });
+	visualizer.push({ step, 0 });
 
 
 	Encoders.removeListener(this);
@@ -137,7 +137,7 @@ void SaveState::load(){
 void SaveState::leftEncMove(int8_t amount){
 	inactiveTimer = 0;
 	if(step == SlotSelect){
-		if((amount < 0 && selection == 0) || (amount > 0 && selection == 3)) return;
+		if((amount < 0 && selection == 0) || (amount > 0 && selection == 1)) return;
 
 		selection += amount;
 	}else if(step == ActionSelect || step == Confirmation){
@@ -165,7 +165,7 @@ void SaveState::buttonPressed(uint i){
 
 		case ActionSelect:
 			step = Confirmation;
-			selectedAction = (selection ? SaveAction::Load : SaveAction::Save);
+			selectedAction = (SaveAction) selection;
 			selection = 0;
 			visualizer.push({ step, selection });
 			break;

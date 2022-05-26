@@ -2,15 +2,16 @@
 #include <Synthia.h>
 #include "LEDStrip.h"
 #include <SPIFFS.h>
+#include <FS/RamFile.h>
 
 SaveVisualizer::SaveVisualizer() : slotAnim(SPIFFS.open("/GIF/Save/loadSave.gif"), &Synthia.TrackMatrix),
 								   no(SPIFFS.open("/GIF/Save/no.gif"), &Synthia.TrackMatrix),
 								   yes(SPIFFS.open("/GIF/Save/yes.gif"), &Synthia.TrackMatrix),
-								   load(SPIFFS.open("/GIF/Save/load.gif"), &Synthia.TrackMatrix),
-								   save(SPIFFS.open("/GIF/Save/save.gif"), &Synthia.TrackMatrix),
-								   diskette(SPIFFS.open("/GIF/Save/diskette.gif"), &Synthia.TrackMatrix){
-	load.setX(9);
-	save.setX(-1);
+								   load(RamFile::open(SPIFFS.open("/GIF/Save/load.gif")), &Synthia.TrackMatrix),
+								   save(RamFile::open(SPIFFS.open("/GIF/Save/save.gif")), &Synthia.TrackMatrix),
+								   diskette(RamFile::open(SPIFFS.open("/GIF/Save/diskette.gif")), &Synthia.TrackMatrix){
+	load.setX(-1);
+	save.setX(9);
 	yes.setX(8);
 }
 
@@ -37,12 +38,12 @@ void SaveVisualizer::visualize(){
 		case ActionSelect:{
 			if(slotAnim.isStarted()) slotAnim.stop();
 
-			if(data.selection && !load.isStarted()){
+			if(!data.selection && !load.isStarted()){
 				save.reset();
 				save.push();
 				save.stop();
 				load.start();
-			}else if(!data.selection && !save.isStarted()){
+			}else if(data.selection && !save.isStarted()){
 				load.reset();
 				load.push();
 				load.stop();
@@ -77,10 +78,10 @@ void SaveVisualizer::visualize(){
 			if(!diskette.isStarted()){
 				diskette.start();
 			}
-			if(data.selection && !load.isStarted()){
+			if(!data.selection && !load.isStarted()){
 				load.setX(9);
 				load.start();
-			}else if(!data.selection && !save.isStarted()){
+			}else if(data.selection && !save.isStarted()){
 				save.setX(8);
 				save.start();
 			}
