@@ -72,7 +72,7 @@ void Recorder::recordFunc(){
 		}
 	}
 
-	float factor = (float) (INT16_MAX + 10) / (float) max;
+	float factor = (float) INT16_MAX / (float) (max + 10);
 	for(int i = 0; i < sampleCount; i++){
 		wavBuffer[i] = (float) wavBuffer[i] * factor;
 	}
