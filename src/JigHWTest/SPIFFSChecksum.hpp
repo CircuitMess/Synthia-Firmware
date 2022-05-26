@@ -28,10 +28,10 @@ struct {
 		{ "/GIF/Samples/RecWait.gif", 5732},
 		{ "/GIF/Samples/Snare.gif", 29664},
 		{ "/GIF/Save/diskette.gif", 2829},
-		{ "/GIF/Save/load.gif", 17119},
+		{ "/GIF/Save/load.gif", 16916},
 		{ "/GIF/Save/loadSave.gif", 38797},
 		{ "/GIF/Save/no.gif", 10111},
-		{ "/GIF/Save/save.gif", 16916},
+		{ "/GIF/Save/save.gif", 17119},
 		{ "/GIF/Save/yes.gif", 10824},
 		{ "/GIF/Swipe.gif", 7424},
 		{ "/GIF/TrackEdit.gif", 36824},
@@ -44,11 +44,6 @@ struct {
 		{ "/HWTestSamples/knobs.aac", 49340},
 		{ "/HWTestSamples/outro.aac", 38746},
 		{ "/HWTestSamples/sliders.aac", 63077},
-		{ "/Placeholder/Cursor.gif", 4403},
-		{ "/Placeholder/Sliders.gif", 4229},
-		{ "/Placeholder/SlotRGB.gif", 3849},
-		{ "/Placeholder/Track.gif", 3562},
-		{ "/Placeholder/TrackRGB.gif", 3790},
 		{ "/Samples/clap.wav", 6884},
 		{ "/Samples/closedhihat.wav", 15693},
 		{ "/Samples/kick.wav", 110087},
@@ -57,4 +52,5 @@ struct {
 		{ "/Synthia.aac", 75621},
 		{ "/talk.gif", 13119}
 };
+
 #endif //CHATTER_FIRMWARE_SPIFFSCHECKSUM_H
