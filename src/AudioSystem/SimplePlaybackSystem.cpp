@@ -72,11 +72,10 @@ void SimplePlaybackSystem::player(){
 			output.start();
 		}
 
-		if(output.isRunning()){
-			output.loop(0);
-			if(!output.isRunning()){
-				running = false;
-			}
+		bool wasRunning = output.isRunning();
+		output.loop(0);
+		if(wasRunning && !output.isRunning()){
+			running = false;
 		}
 	}
 }
