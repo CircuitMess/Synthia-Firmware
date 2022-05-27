@@ -26,8 +26,8 @@ void initLog(){
 }
 
 bool checkJig(){
-	//TODO - add jig conditions
-	return false;
+	Wire.beginTransmission(0x51);
+	return Wire.endTransmission() == 0;
 }
 
 void setup(){
