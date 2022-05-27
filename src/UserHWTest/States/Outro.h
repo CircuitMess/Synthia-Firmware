@@ -4,6 +4,7 @@
 #include <Loop/LoopListener.h>
 #include <Input/InputListener.h>
 #include "../State.h"
+#include "../../Timeout.h"
 
 namespace UserHWTest {
 	class Outro : public State, public LoopListener, private InputListener {
@@ -17,6 +18,8 @@ namespace UserHWTest {
 
 	private:
 		void buttonPressed(uint i) override;
+
+		Timeout* timeout = nullptr;
 
 	};
 }

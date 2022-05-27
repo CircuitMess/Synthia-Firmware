@@ -25,7 +25,12 @@ void UserHWTest::Outro::stop(){
 
 void UserHWTest::Outro::loop(uint micros){
 	if(isPlaying()) return;
-	done();
+	LoopManager::removeListener(this);
+
+	if(timeout) return;
+	timeout = new Timeout(500, [this](){
+		done();
+	});
 }
 
 void UserHWTest::Outro::buttonPressed(uint i){
