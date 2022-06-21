@@ -52,7 +52,7 @@ void SampleEditState::onStart(){
 
 	load->start(1, 0);
 	MatrixAnimGIF intro(SPIFFS.open("/GIF/SampleEdit.gif"), &Synthia.TrackMatrix);
-	intro.getGIF().setLoopMode(GIF::SINGLE);
+	intro.getGIF().setLoopMode(GIF::Single);
 	intro.start();
 	while(load->running || intro.isStarted()){
 		intro.loop(0);
@@ -118,7 +118,7 @@ void SampleEditState::buttonHeld(uint i){
 
 
 	MatrixAnimGIF outro(SPIFFS.open("/GIF/TrackEdit.gif"), &Synthia.TrackMatrix);
-	outro.getGIF().setLoopMode(GIF::SINGLE);
+	outro.getGIF().setLoopMode(GIF::Single);
 	outro.start();
 
 	Playback.release(slot);
@@ -325,7 +325,7 @@ void SampleEditState::saveRecording(SlotConfig* other){
 	LEDStrip.setLeftFromCenter(0);
 
 	MatrixAnimGIF outro(RamFile::open(SPIFFS.open("/GIF/Loading.gif")), &Synthia.TrackMatrix);
-	outro.getGIF().setLoopMode(GIF::INFINITE);
+	outro.getGIF().setLoopMode(GIF::Infinite);
 	outro.start();
 
 	save.start(1, 0);

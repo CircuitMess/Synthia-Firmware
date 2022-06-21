@@ -48,7 +48,7 @@ void Intro::onStart(){
 
 		anims[i] = std::unique_ptr<MatrixAnimGIF>(new MatrixAnimGIF(file));
 
-		anims[i]->getGIF().setLoopMode(IntroAnims[i].loop ? GIF::INFINITE : GIF::SINGLE);
+		anims[i]->getGIF().setLoopMode(IntroAnims[i].loop ? GIF::Infinite : GIF::Single);
 		anims[i]->setMatrix(&IntroAnims[i].matrix);
 	}
 
@@ -119,7 +119,7 @@ void Intro::loop(uint micros){
 			}
 
 			loadingAnim = std::unique_ptr<MatrixAnimGIF>(new MatrixAnimGIF(file));
-			loadingAnim->getGIF().setLoopMode(GIF::INFINITE);
+			loadingAnim->getGIF().setLoopMode(GIF::Infinite);
 			loadingAnim->setMatrix(&Synthia.TrackMatrix);
 			loadingAnim->start();
 		}
