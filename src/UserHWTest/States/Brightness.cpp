@@ -2,6 +2,7 @@
 #include <Synthia.h>
 #include <FS/RamFile.h>
 #include <Loop/LoopManager.h>
+#include <Util/HWRevision.h>
 #include "Brightness.h"
 #include "../../Visualization/LEDStrip.h"
 
@@ -22,7 +23,7 @@ void UserHWTest::Brightness::start(){
 	}
 	Synthia.SlidersMatrix.push();
 
-	setBrightness(::Sliders.getRightPotValue());
+	setBrightness(Settings.get().brightness);
 }
 
 void UserHWTest::Brightness::stop(){
@@ -32,10 +33,10 @@ void UserHWTest::Brightness::stop(){
 	::Sliders.removeListener(this);
 	Synthia.getInput()->removeListener(this);
 
-	Synthia.SlidersMatrix.clear();
-	Synthia.SlidersMatrix.push();
+	Synthia.clearMatrices();
 
 	Settings.get().brightness = brightness;
+	Settings.store();
 }
 
 void UserHWTest::Brightness::loop(uint micros){
@@ -55,7 +56,15 @@ void UserHWTest::Brightness::rightPotMove(uint8_t value){
 }
 
 void UserHWTest::Brightness::setBrightness(uint8_t value){
-	brightness = map(value, 0, 255, 50, 255);
-	Synthia.getCharlie().setBrightness(brightness);
+	brightness = value;
+
+	const auto mapped = map(value, 0, 255, 50, 150);
+	Synthia.getCharlie().setBrightness(mapped);
+
+	if(HWRevision::get() > 0){
+		Synthia.SlotRGB.setBrightness(mapped);
+		Synthia.TrackRGB.setBrightness(mapped);
+	}
+
 	LEDStrip.setRight(value);
 }
