@@ -2,6 +2,7 @@
 #include <Synthia.h>
 #include <CircuitOS.h>
 #include <CMAudio.h>
+#include <Util/HWRevision.h>
 #include <Loop/LoopManager.h>
 #include <esp_log.h>
 
@@ -46,9 +47,14 @@ void setup(){
 	RGBSlot.begin(&Synthia.SlotRGB);
 
 	if(!Settings.get().tested){
-		auto test = new UserHWTest::Test();
-		test->start();
-		return;
+		if(HWRevision::get() > 0){
+			Settings.get().tested = true;
+			Settings.store();
+		}else{
+			auto test = new UserHWTest::Test();
+			test->start();
+			return;
+		}
 	}
 
 	Playback.begin();
