@@ -35,7 +35,7 @@ private:
 	static bool PSRAMTest();
 	static bool IS31Test();
 	static bool SPIFFSTest();
-	static bool AudioTest();
+	static bool MicTest();
 
 	static uint32_t calcChecksum(fs::File& file);
 

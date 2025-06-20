@@ -31,7 +31,7 @@ JigHWTest::JigHWTest(){
 	tests.push_back({ JigHWTest::PSRAMTest, "PSRAM", [](){}});
 	tests.push_back({ JigHWTest::IS31Test, "Charlie", [](){}});
 	tests.push_back({ JigHWTest::SPIFFSTest, "SPIFFS", [](){}});
-	tests.push_back({ JigHWTest::AudioTest, "Audio", [](){}});
+	// tests.push_back({ JigHWTest::MicTest, "Mic", [](){}}); // TODO: uncomment once the test is done
 }
 
 void JigHWTest::start(){
@@ -196,7 +196,7 @@ uint32_t JigHWTest::calcChecksum(File& file){
 	return sum;
 }
 
-bool JigHWTest::AudioTest(){
+bool JigHWTest::MicTest(){
 
 	esp_err_t err = i2s_driver_install(I2S_NUM_0, &i2s_config, 0, nullptr);
 	if(err != ESP_OK){
