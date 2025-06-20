@@ -32,12 +32,15 @@ JigHWTest::JigHWTest(){
 	tests.push_back({ JigHWTest::IS31Test, "Charlie", [](){}});
 	tests.push_back({ JigHWTest::SPIFFSTest, "SPIFFS", [](){}});
 	tests.push_back({ JigHWTest::ButtonsTest, "Buttons", [](){}});
+	tests.push_back({ JigHWTest::SlidersTest, "Sliders", [](){}});
 	// tests.push_back({ JigHWTest::MicTest, "Mic", [](){}}); // TODO: uncomment once the test is done
 }
 
 void JigHWTest::start(){
 	Serial.println();
 	Serial.printf("TEST:begin:%llx\n", ESP.getEfuseMac());
+
+	Synthia.TrackMatrix.setFont(Matrix::SMALL);
 
 	bool pass = true;
 	for(const Test &singleTest : tests){
@@ -184,15 +187,8 @@ bool JigHWTest::ButtonsTest(){
 	auto input = Synthia.getInput();
 
 	const std::string string = "BUTTONS";
-
-	Synthia.TrackMatrix.setFont(Matrix::SMALL);
-	Synthia.TrackMatrix.clear();
-	Synthia.TrackMatrix.drawString(0, 0, string.c_str());
-	Synthia.TrackMatrix.push();
-
 	int32_t textScrollCursor = -Synthia.TrackMatrix.getWidth();
-
-	uint32_t textScrollTime = millis();
+	uint32_t textScrollTime = 0;
 
 	std::vector<bool> pressed(ButtonCount, false);
 	std::vector<bool> released(ButtonCount, false);
@@ -252,6 +248,66 @@ bool JigHWTest::ButtonsTest(){
 
 	Synthia.clearMatrices();
 	return pressCount == ButtonCount && releaseCount == ButtonCount;
+}
+
+bool JigHWTest::SlidersTest(){
+	const std::string string = "SLIDERS";
+	int32_t textScrollCursor = -Synthia.TrackMatrix.getWidth();
+	uint32_t textScrollTime = 0;
+
+	uint8_t leftMin, leftMax, rightMin, rightMax;
+	leftMin = leftMax = Sliders.getLeftPotValue();
+	rightMin = rightMax = Sliders.getRightPotValue();
+
+	while(leftMin > 0 || leftMax < 255 || rightMin > 0 || rightMax < 255){
+		LoopManager::loop();
+
+		if(millis() - textScrollTime > 100){
+			textScrollTime = millis();
+			textScrollCursor++;
+			if(textScrollCursor >= (int16_t) (string.size() * (3 + 1) - 1)){
+				textScrollCursor = -Synthia.TrackMatrix.getWidth();
+			}
+
+			Synthia.TrackMatrix.clear();
+			Synthia.TrackMatrix.drawString(-textScrollCursor, 5, string.c_str());
+			Synthia.TrackMatrix.push();
+		}
+
+		leftMin = min(leftMin, Sliders.getLeftPotValue());
+		leftMax = max(leftMax, Sliders.getLeftPotValue());
+		rightMin = min(rightMin, Sliders.getRightPotValue());
+		rightMax = max(rightMax, Sliders.getRightPotValue());
+
+		uint8_t leftStart = map(255 - leftMax, 0, 255, 0, 7);
+		uint8_t leftEnd = map(255 - leftMin, 0, 255, 0, 7);
+		uint8_t rightStart = map(255 - rightMax, 0, 255, 0, 7);
+		uint8_t rightEnd = map(255 - rightMin, 0, 255, 0, 7);
+		if(leftStart == 7 && leftMin > 0){
+			leftStart = 6;
+		}
+		if(leftEnd == 0 && leftMax < 255){
+			leftEnd = 1;
+		}
+		if(rightStart == 7 && rightMin > 0){
+			rightStart = 6;
+		}
+		if(rightEnd == 0 && rightMax < 255){
+			rightEnd = 1;
+		}
+
+		Synthia.SlidersMatrix.clear();
+		for(int i = leftStart; i <= leftEnd; i++){
+			Synthia.SlidersMatrix.drawPixel(0, i, MatrixPixel::White);
+		}
+		for(int i = rightStart; i <= rightEnd; i++){
+			Synthia.SlidersMatrix.drawPixel(1, i, MatrixPixel::White);
+		}
+		Synthia.SlidersMatrix.push();
+	}
+
+	Synthia.clearMatrices();
+	return true;
 }
 
 uint32_t JigHWTest::calcChecksum(File& file){
