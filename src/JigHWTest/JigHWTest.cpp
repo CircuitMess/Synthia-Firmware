@@ -31,6 +31,7 @@ JigHWTest::JigHWTest(){
 	tests.push_back({ JigHWTest::PSRAMTest, "PSRAM", [](){}});
 	tests.push_back({ JigHWTest::IS31Test, "Charlie", [](){}});
 	tests.push_back({ JigHWTest::SPIFFSTest, "SPIFFS", [](){}});
+	tests.push_back({ JigHWTest::ButtonsTest, "Buttons", [](){}});
 	// tests.push_back({ JigHWTest::MicTest, "Mic", [](){}}); // TODO: uncomment once the test is done
 }
 
@@ -177,6 +178,80 @@ bool JigHWTest::SPIFFSTest(){
 	}
 
 	return true;
+}
+
+bool JigHWTest::ButtonsTest(){
+	auto input = Synthia.getInput();
+
+	const std::string string = "BUTTONS";
+
+	Synthia.TrackMatrix.setFont(Matrix::SMALL);
+	Synthia.TrackMatrix.clear();
+	Synthia.TrackMatrix.drawString(0, 0, string.c_str());
+	Synthia.TrackMatrix.push();
+
+	int32_t textScrollCursor = -Synthia.TrackMatrix.getWidth();
+
+	uint32_t textScrollTime = millis();
+
+	std::vector<bool> pressed(ButtonCount, false);
+	std::vector<bool> released(ButtonCount, false);
+	uint8_t pressCount = 0;
+	uint8_t releaseCount = 0;
+	for(;;){
+		LoopManager::loop();
+
+		for(int i = 0; i < ButtonCount; i++){
+			if(input->getButtonState((int) ((int) Pins.get(Pin::Btn1) + i)) && !pressed[i]){
+				printf("Press %d\n\r", i);
+				pressed[i] = true;
+				pressCount++;
+			}else if(!input->getButtonState((int) ((int) Pins.get(Pin::Btn1) + i)) && pressed[i] && !released[i]){
+				printf("Release %d\n\r", i);
+				released[i] = true;
+				releaseCount++;
+			}
+		}
+
+		if(pressCount == ButtonCount && releaseCount == ButtonCount) break;
+
+		if(millis() - textScrollTime > 100){
+			textScrollTime = millis();
+			textScrollCursor++;
+			if(textScrollCursor >= (int16_t) (string.size() * (3 + 1) - 1)){
+				textScrollCursor = -Synthia.TrackMatrix.getWidth();
+			}
+
+			Synthia.TrackMatrix.clear();
+			Synthia.TrackMatrix.drawString(-textScrollCursor, 5, string.c_str());
+			Synthia.TrackMatrix.push();
+		}
+
+		Synthia.SlotRGB.clear();
+		for(int i = 0; i < 5; i++){
+			if(input->getButtonState((int) ((int) Pins.get(Pin::Btn1) + i))){
+				Synthia.SlotRGB.drawPixel(i, MatrixPixel::Yellow);
+			}else if(pressed[i] && released[i]){
+				Synthia.SlotRGB.drawPixel(i, MatrixPixel::Blue);
+			}else{
+				Synthia.SlotRGB.drawPixel(i, { 10, 10, 10, 255 });
+			}
+		}
+
+		Synthia.SlidersMatrix.clear();
+		for(int i = 0; i < 2; i++){
+			if(pressed[5+i]){
+				Synthia.SlidersMatrix.drawPixel(i, 6, MatrixPixel::White);
+				Synthia.SlidersMatrix.drawPixel(i, 7, MatrixPixel::White);
+			}
+		}
+
+		Synthia.SlotRGB.push();
+		Synthia.SlidersMatrix.push();
+	}
+
+	Synthia.clearMatrices();
+	return pressCount == ButtonCount && releaseCount == ButtonCount;
 }
 
 uint32_t JigHWTest::calcChecksum(File& file){

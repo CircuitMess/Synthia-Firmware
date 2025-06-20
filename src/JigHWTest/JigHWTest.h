@@ -35,11 +35,13 @@ private:
 	static bool PSRAMTest();
 	static bool IS31Test();
 	static bool SPIFFSTest();
+	static bool ButtonsTest();
 	static bool MicTest();
 
 	static uint32_t calcChecksum(fs::File& file);
 
 	static const uint32_t PSRAMSize = 4194252; //starting size reported by ESP.getFreePsram() after initialization
+	static constexpr int ButtonCount = 7;
 
 	void postTest();
 
