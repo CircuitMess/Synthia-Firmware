@@ -8,6 +8,7 @@
 #include <Devices/Matrix/MatrixAnimGIF.h>
 #include "../Visualization/TempoAnim.h"
 #include <Loop/LoopManager.h>
+#include <Util/HWRevision.h>
 
 static const i2s_config_t i2s_config = {
 		.mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_RX),
@@ -31,10 +32,11 @@ JigHWTest::JigHWTest(){
 	tests.push_back({ JigHWTest::PSRAMTest, "PSRAM", [](){}});
 	tests.push_back({ JigHWTest::IS31Test, "Charlie", [](){}});
 	tests.push_back({ JigHWTest::SPIFFSTest, "SPIFFS", [](){}});
+	// tests.push_back({ JigHWTest::MicTest, "Mic", [](){}}); // TODO: uncomment once the test is done
 	tests.push_back({ JigHWTest::ButtonsTest, "Buttons", [](){}});
 	tests.push_back({ JigHWTest::SlidersTest, "Sliders", [](){}});
 	tests.push_back({ JigHWTest::EncodersTest, "Encoders", [](){}});
-	// tests.push_back({ JigHWTest::MicTest, "Mic", [](){}}); // TODO: uncomment once the test is done
+	tests.push_back({ JigHWTest::hwRevision, "HW rev", [](){}});
 }
 
 void JigHWTest::start(){
@@ -368,6 +370,18 @@ bool JigHWTest::EncodersTest(){
 	Encoders.setLeftEncCallback(nullptr);
 	Encoders.setRightEncCallback(nullptr);
 	Synthia.clearMatrices();
+
+	return true;
+}
+
+bool JigHWTest::hwRevision(){
+	const auto rev = HWRevision::get();
+	if(rev != 0){
+		return rev == CurrentVersion;
+	}
+
+	HWRevision::write(CurrentVersion);
+	HWRevision::commit();
 
 	return true;
 }
