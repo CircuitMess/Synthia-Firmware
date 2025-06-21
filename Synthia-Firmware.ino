@@ -2,6 +2,7 @@
 #include <Synthia.h>
 #include <CircuitOS.h>
 #include <CMAudio.h>
+#include <Util/HWRevision.h>
 #include <Loop/LoopManager.h>
 #include <esp_log.h>
 
@@ -26,29 +27,64 @@ void initLog(){
 }
 
 bool checkJig(){
-	Wire.beginTransmission(0x51);
-	return Wire.endTransmission() == 0;
+	char buf[7];
+	int wp = 0;
+
+	uint32_t start = millis();
+	int c;
+	while(millis() - start < 500){
+		vTaskDelay(1);
+		c = getchar();
+		if(c == EOF) continue;
+		buf[wp] = (char) c;
+		wp = (wp + 1) % 7;
+
+		for(int i = 0; i < 7; i++){
+			int match = 0;
+			static const char* target = "JIGTEST";
+
+			for(int j = 0; j < 7; j++){
+				match += buf[(i + j) % 7] == target[j];
+			}
+
+			if(match == 7) return true;
+		}
+	}
+
+	return false;
 }
 
 void setup(){
 	Serial.begin(115200);
 	initLog();
-	Synthia.begin();
 
 	if(checkJig()){
+		Synthia.initVer(1);
+		Settings.reset();
+		Synthia.begin();
+
 		JigHWTest* test = new JigHWTest();
 		test->start();
 
 		for(;;);
+	}else{
+		printf("Hello\n");
 	}
+
+	Synthia.begin();
 
 	RGBTrack.begin(&Synthia.TrackRGB);
 	RGBSlot.begin(&Synthia.SlotRGB);
 
 	if(!Settings.get().tested){
-		auto test = new UserHWTest::Test();
-		test->start();
-		return;
+		if(HWRevision::get() > 0){
+			Settings.get().tested = true;
+			Settings.store();
+		}else{
+			auto test = new UserHWTest::Test();
+			test->start();
+			return;
+		}
 	}
 
 	Playback.begin();

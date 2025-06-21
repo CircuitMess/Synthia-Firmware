@@ -8,6 +8,7 @@
 #include <Devices/Matrix/MatrixAnimGIF.h>
 #include "../Visualization/TempoAnim.h"
 #include <Loop/LoopManager.h>
+#include <Util/HWRevision.h>
 
 static const i2s_config_t i2s_config = {
 		.mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_RX),
@@ -31,19 +32,41 @@ JigHWTest::JigHWTest(){
 	tests.push_back({ JigHWTest::PSRAMTest, "PSRAM", [](){}});
 	tests.push_back({ JigHWTest::IS31Test, "Charlie", [](){}});
 	tests.push_back({ JigHWTest::SPIFFSTest, "SPIFFS", [](){}});
-	tests.push_back({ JigHWTest::AudioTest, "Audio", [](){}});
+	// tests.push_back({ JigHWTest::MicTest, "Mic", [](){}}); // TODO: uncomment once the test is done
+	tests.push_back({ JigHWTest::ButtonsTest, "Buttons", [](){}});
+	tests.push_back({ JigHWTest::SlidersTest, "Sliders", [](){}});
+	tests.push_back({ JigHWTest::EncodersTest, "Encoders", [](){}});
+	tests.push_back({ JigHWTest::hwRevision, "HW rev", [](){}});
 }
 
 void JigHWTest::start(){
 	Serial.println();
 	Serial.printf("TEST:begin:%llx\n", ESP.getEfuseMac());
 
+	Synthia.TrackMatrix.setFont(Matrix::SMALL);
+
+	const auto progress = [&](uint8_t test){
+		const float ratio = (float) (test+1) / (float) tests.size();
+		Synthia.CursorMatrix.clear();
+
+		for(int i = 0; i < Synthia.CursorMatrix.getWidth(); i++){
+			const float pixel = (float) (i+1) / (float) Synthia.CursorMatrix.getWidth();
+			if(pixel <= ratio){
+				Synthia.CursorMatrix.drawPixel(i, MatrixPixel::White);
+			}
+		}
+
+		Synthia.CursorMatrix.push();
+	};
+
 	bool pass = true;
-	for(const Test &singleTest : tests){
+	for(int i = 0; i < tests.size(); i++){
+		const Test& singleTest = tests[i];
 		currentTest = singleTest.name;
 
 		Serial.printf("TEST:startTest:%s\n", currentTest);
 
+		progress(i);
 		bool result = singleTest.test();
 
 		Serial.printf("TEST:endTest:%s\n", result ? "pass" : "fail");
@@ -57,37 +80,63 @@ void JigHWTest::start(){
 		}
 	}
 
-	if(!pass){
+	Synthia.clearMatrices();
+
+	if(pass){
+		Serial.println("TEST:passall");
+		postTestPass();
+	}else{
 		Serial.printf("TEST:fail:%s\n", currentTest);
-		for(;;);
+		postTestFail();
 	}
-
-	Serial.println("TEST:passall");
-
-	postTest();
 }
 
-void JigHWTest::postTest(){
+void JigHWTest::postTestFail(){
+	Synthia.TrackMatrix.clear();
+	Synthia.TrackMatrix.drawString(0, 5, "FAIL");
+	Synthia.TrackMatrix.push();
+
+	uint32_t flashTime = 0;
+	bool state = true;
+	for(;;){
+		if(millis() - flashTime < 500) continue;
+		flashTime = millis();
+		Synthia.SlotRGB.clear(state ? MatrixPixel::Red : MatrixPixel::Off);
+		Synthia.TrackRGB.clear(state ? MatrixPixel::Red : MatrixPixel::Off);
+		Synthia.SlotRGB.push();
+		Synthia.TrackRGB.push();
+		state = !state;
+	}
+}
+
+void JigHWTest::postTestPass(){
 	// Disable input
-	LoopManager::removeListener(Synthia.getInput());
 	LoopManager::removeListener(&Sliders);
 	LoopManager::removeListener(&Encoders);
 
 	// Audio test
-	/*Playback.begin();
+	Playback.begin();
 	Playback.setVolume(200);
-
-	Playback.set(0, SPIFFS.open("/Samples/clap.wav"), SlotConfig{});
-	Playback.play(0);
-
-	Synthia.TrackMatrix.setBrightness(150);
-	Synthia.CursorMatrix.setBrightness(150);
-	Synthia.SlidersMatrix.setBrightness(150);*/
+	Playback.set(0, SPIFFS.open("/Samples/kick.wav"), SlotConfig{});
+	Playback.set(1, SPIFFS.open("/Samples/snare.wav"), SlotConfig{});
+	Playback.set(2, SPIFFS.open("/Samples/clap.wav"), SlotConfig{});
+	Playback.set(3, SPIFFS.open("/Samples/closedhihat.wav"), SlotConfig{});
+	Playback.set(4, SPIFFS.open("/Samples/openhihat.wav"), SlotConfig{});
+	Synthia.getInput()->setBtnPressCallback(Pins.get(Pin::Btn1), [](){ Playback.play(0); });
+	Synthia.getInput()->setBtnPressCallback(Pins.get(Pin::Btn2), [](){ Playback.play(1); });
+	Synthia.getInput()->setBtnPressCallback(Pins.get(Pin::Btn3), [](){ Playback.play(2); });
+	Synthia.getInput()->setBtnPressCallback(Pins.get(Pin::Btn4), [](){ Playback.play(3); });
+	Synthia.getInput()->setBtnPressCallback(Pins.get(Pin::Btn5), [](){ Playback.play(4); });
 
 	// Matrix test
+	Synthia.getCharlie().setBrightness(80);
+
 	Synthia.TrackMatrix.startAnimation(new MatrixAnimGIF(SPIFFS.open("/GIF/Swipe.gif")));
 	Synthia.SlidersMatrix.startAnimation(new MatrixAnimGIF(SPIFFS.open("/GIF/Intro/Sliders.gif")));
-	Synthia.CursorMatrix.startAnimation(new TempoAnim(&Synthia.CursorMatrix));
+
+	auto tempo = new TempoAnim(&Synthia.CursorMatrix);
+	tempo->setTempo(20);
+	Synthia.CursorMatrix.startAnimation(tempo);
 
 	uint32_t blinkTime = 0;
 	uint8_t blinkIndex = 0;
@@ -179,6 +228,206 @@ bool JigHWTest::SPIFFSTest(){
 	return true;
 }
 
+bool JigHWTest::ButtonsTest(){
+	auto input = Synthia.getInput();
+
+	const std::string string = "BUTTONS";
+	int32_t textScrollCursor = -Synthia.TrackMatrix.getWidth();
+	uint32_t textScrollTime = 0;
+
+	std::vector<bool> pressed(ButtonCount, false);
+	std::vector<bool> released(ButtonCount, false);
+	uint8_t pressCount = 0;
+	uint8_t releaseCount = 0;
+	for(;;){
+		LoopManager::loop();
+
+		for(int i = 0; i < ButtonCount; i++){
+			if(input->getButtonState((int) ((int) Pins.get(Pin::Btn1) + i)) && !pressed[i]){
+				printf("Press %d\n\r", i);
+				pressed[i] = true;
+				pressCount++;
+			}else if(!input->getButtonState((int) ((int) Pins.get(Pin::Btn1) + i)) && pressed[i] && !released[i]){
+				printf("Release %d\n\r", i);
+				released[i] = true;
+				releaseCount++;
+			}
+		}
+
+		if(pressCount == ButtonCount && releaseCount == ButtonCount) break;
+
+		if(millis() - textScrollTime > 100){
+			textScrollTime = millis();
+			textScrollCursor++;
+			if(textScrollCursor >= (int16_t) (string.size() * (3 + 1) - 1)){
+				textScrollCursor = -Synthia.TrackMatrix.getWidth();
+			}
+
+			Synthia.TrackMatrix.clear();
+			Synthia.TrackMatrix.drawString(-textScrollCursor, 5, string.c_str());
+			Synthia.TrackMatrix.push();
+		}
+
+		Synthia.SlotRGB.clear();
+		for(int i = 0; i < 5; i++){
+			if(input->getButtonState((int) ((int) Pins.get(Pin::Btn1) + i))){
+				Synthia.SlotRGB.drawPixel(i, MatrixPixel::Yellow);
+			}else if(pressed[i] && released[i]){
+				Synthia.SlotRGB.drawPixel(i, MatrixPixel::Blue);
+			}else{
+				Synthia.SlotRGB.drawPixel(i, { 10, 10, 10, 255 });
+			}
+		}
+
+		Synthia.SlidersMatrix.clear();
+		for(int i = 0; i < 2; i++){
+			if(pressed[5+i]){
+				Synthia.SlidersMatrix.drawPixel(i, 6, MatrixPixel::White);
+				Synthia.SlidersMatrix.drawPixel(i, 7, MatrixPixel::White);
+			}
+		}
+
+		Synthia.SlotRGB.push();
+		Synthia.SlidersMatrix.push();
+	}
+
+	Synthia.clearMatrices();
+	return pressCount == ButtonCount && releaseCount == ButtonCount;
+}
+
+bool JigHWTest::SlidersTest(){
+	const std::string string = "SLIDERS";
+	int32_t textScrollCursor = -Synthia.TrackMatrix.getWidth();
+	uint32_t textScrollTime = 0;
+
+	uint8_t leftMin, leftMax, rightMin, rightMax;
+	leftMin = leftMax = Sliders.getLeftPotValue();
+	rightMin = rightMax = Sliders.getRightPotValue();
+
+	while(leftMin > 0 || leftMax < 255 || rightMin > 0 || rightMax < 255){
+		LoopManager::loop();
+
+		if(millis() - textScrollTime > 100){
+			textScrollTime = millis();
+			textScrollCursor++;
+			if(textScrollCursor >= (int16_t) (string.size() * (3 + 1) - 1)){
+				textScrollCursor = -Synthia.TrackMatrix.getWidth();
+			}
+
+			Synthia.TrackMatrix.clear();
+			Synthia.TrackMatrix.drawString(-textScrollCursor, 5, string.c_str());
+			Synthia.TrackMatrix.push();
+		}
+
+		leftMin = min(leftMin, Sliders.getLeftPotValue());
+		leftMax = max(leftMax, Sliders.getLeftPotValue());
+		rightMin = min(rightMin, Sliders.getRightPotValue());
+		rightMax = max(rightMax, Sliders.getRightPotValue());
+
+		uint8_t leftStart = map(255 - leftMax, 0, 255, 0, 7);
+		uint8_t leftEnd = map(255 - leftMin, 0, 255, 0, 7);
+		uint8_t rightStart = map(255 - rightMax, 0, 255, 0, 7);
+		uint8_t rightEnd = map(255 - rightMin, 0, 255, 0, 7);
+		if(leftStart == 7 && leftMin > 0){
+			leftStart = 6;
+		}
+		if(leftEnd == 0 && leftMax < 255){
+			leftEnd = 1;
+		}
+		if(rightStart == 7 && rightMin > 0){
+			rightStart = 6;
+		}
+		if(rightEnd == 0 && rightMax < 255){
+			rightEnd = 1;
+		}
+
+		Synthia.SlidersMatrix.clear();
+		for(int i = leftStart; i <= leftEnd; i++){
+			Synthia.SlidersMatrix.drawPixel(0, i, MatrixPixel::White);
+		}
+		for(int i = rightStart; i <= rightEnd; i++){
+			Synthia.SlidersMatrix.drawPixel(1, i, MatrixPixel::White);
+		}
+		Synthia.SlidersMatrix.push();
+	}
+
+	Synthia.clearMatrices();
+	return true;
+}
+
+bool JigHWTest::EncodersTest(){
+	const std::string string = "ENCODERS";
+	int32_t textScrollCursor = -Synthia.TrackMatrix.getWidth();
+	uint32_t textScrollTime = 0;
+
+	static bool lLeft, lRight, rLeft, rRight;
+	lLeft = lRight = rLeft = rRight = false;
+
+	Encoders.setLeftEncCallback([](int8_t val){
+		if(val == -1){
+			lLeft = true;
+		}else if(val == 1){
+			lRight = true;
+		}
+	});
+
+	Encoders.setRightEncCallback([](int8_t val){
+		if(val == -1){
+			rLeft = true;
+		}else if(val == 1){
+			rRight = true;
+		}
+	});
+
+	while(!lLeft || !lRight || !rLeft || !rRight){
+		LoopManager::loop();
+
+		if(millis() - textScrollTime > 100){
+			textScrollTime = millis();
+			textScrollCursor++;
+			if(textScrollCursor >= (int16_t) (string.size() * (3 + 1) - 1)){
+				textScrollCursor = -Synthia.TrackMatrix.getWidth();
+			}
+
+			Synthia.TrackMatrix.clear();
+			Synthia.TrackMatrix.drawString(-textScrollCursor, 5, string.c_str());
+			Synthia.TrackMatrix.push();
+		}
+
+		Synthia.SlidersMatrix.clear();
+		for(int x = 0; x < 2; x++){
+			for(int y = 0; y < 8; y++){
+				if((x == 0 && y < 4 && lLeft) || (x == 1 && y < 4 && rLeft)){
+					Synthia.SlidersMatrix.drawPixel(x, y, MatrixPixel::White);
+				}else if((x == 0 && y >= 4 && lRight) || (x == 1 && y >= 4 && rRight)){
+					Synthia.SlidersMatrix.drawPixel(x, y, MatrixPixel::White);
+				}else{
+					Synthia.SlidersMatrix.drawPixel(x, y, MatrixPixel::Off);
+				}
+			}
+		}
+		Synthia.SlidersMatrix.push();
+	}
+
+	Encoders.setLeftEncCallback(nullptr);
+	Encoders.setRightEncCallback(nullptr);
+	Synthia.clearMatrices();
+
+	return true;
+}
+
+bool JigHWTest::hwRevision(){
+	const auto rev = HWRevision::get();
+	if(rev != 0){
+		return rev == CurrentVersion;
+	}
+
+	HWRevision::write(CurrentVersion);
+	HWRevision::commit();
+
+	return true;
+}
+
 uint32_t JigHWTest::calcChecksum(File& file){
 	if(!file) return 0;
 
@@ -196,7 +445,7 @@ uint32_t JigHWTest::calcChecksum(File& file){
 	return sum;
 }
 
-bool JigHWTest::AudioTest(){
+bool JigHWTest::MicTest(){
 
 	esp_err_t err = i2s_driver_install(I2S_NUM_0, &i2s_config, 0, nullptr);
 	if(err != ESP_OK){

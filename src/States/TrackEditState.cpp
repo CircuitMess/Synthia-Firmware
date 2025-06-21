@@ -5,9 +5,11 @@
 #include "SaveState.h"
 #include "PlaybackState.h"
 #include "SampleEditState.h"
+#include "SetBrightness.h"
 #include "../Visualization/RGBController.h"
 #include "../UserHWTest/Test.h"
 #include "../Services/SlotPlayer.h"
+#include <Util/HWRevision.h>
 
 uint8_t TrackEditState::cursor = 0;
 
@@ -203,14 +205,19 @@ void TrackEditState::pushTrackVis(){
 }
 
 void TrackEditState::launchTest(){
-	stop();
-	delete this;
-
 	Player.disable();
 	Playback.stop();
 
 	Synthia.clearMatrices();
 
-	auto test = new UserHWTest::Test();
-	test->start();
+	if(HWRevision::get() > 0){
+		auto sett = new SetBrightness(this);
+		sett->push(this);
+	}else{
+		stop();
+		delete this;
+
+		auto test = new UserHWTest::Test();
+		test->start();
+	}
 }
