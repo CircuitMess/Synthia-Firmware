@@ -45,12 +45,28 @@ void JigHWTest::start(){
 
 	Synthia.TrackMatrix.setFont(Matrix::SMALL);
 
+	const auto progress = [&](uint8_t test){
+		const float ratio = (float) (test+1) / (float) tests.size();
+		Synthia.CursorMatrix.clear();
+
+		for(int i = 0; i < Synthia.CursorMatrix.getWidth(); i++){
+			const float pixel = (float) (i+1) / (float) Synthia.CursorMatrix.getWidth();
+			if(pixel <= ratio){
+				Synthia.CursorMatrix.drawPixel(i, MatrixPixel::White);
+			}
+		}
+
+		Synthia.CursorMatrix.push();
+	};
+
 	bool pass = true;
-	for(const Test &singleTest : tests){
+	for(int i = 0; i < tests.size(); i++){
+		const Test& singleTest = tests[i];
 		currentTest = singleTest.name;
 
 		Serial.printf("TEST:startTest:%s\n", currentTest);
 
+		progress(i);
 		bool result = singleTest.test();
 
 		Serial.printf("TEST:endTest:%s\n", result ? "pass" : "fail");
@@ -64,37 +80,63 @@ void JigHWTest::start(){
 		}
 	}
 
-	if(!pass){
+	Synthia.clearMatrices();
+
+	if(pass){
+		Serial.println("TEST:passall");
+		postTestPass();
+	}else{
 		Serial.printf("TEST:fail:%s\n", currentTest);
-		for(;;);
+		postTestFail();
 	}
-
-	Serial.println("TEST:passall");
-
-	postTest();
 }
 
-void JigHWTest::postTest(){
+void JigHWTest::postTestFail(){
+	Synthia.TrackMatrix.clear();
+	Synthia.TrackMatrix.drawString(0, 5, "FAIL");
+	Synthia.TrackMatrix.push();
+
+	uint32_t flashTime = 0;
+	bool state = true;
+	for(;;){
+		if(millis() - flashTime < 500) continue;
+		flashTime = millis();
+		Synthia.SlotRGB.clear(state ? MatrixPixel::Red : MatrixPixel::Off);
+		Synthia.TrackRGB.clear(state ? MatrixPixel::Red : MatrixPixel::Off);
+		Synthia.SlotRGB.push();
+		Synthia.TrackRGB.push();
+		state = !state;
+	}
+}
+
+void JigHWTest::postTestPass(){
 	// Disable input
-	LoopManager::removeListener(Synthia.getInput());
 	LoopManager::removeListener(&Sliders);
 	LoopManager::removeListener(&Encoders);
 
 	// Audio test
-	/*Playback.begin();
+	Playback.begin();
 	Playback.setVolume(200);
-
-	Playback.set(0, SPIFFS.open("/Samples/clap.wav"), SlotConfig{});
-	Playback.play(0);
-
-	Synthia.TrackMatrix.setBrightness(150);
-	Synthia.CursorMatrix.setBrightness(150);
-	Synthia.SlidersMatrix.setBrightness(150);*/
+	Playback.set(0, SPIFFS.open("/Samples/kick.wav"), SlotConfig{});
+	Playback.set(1, SPIFFS.open("/Samples/snare.wav"), SlotConfig{});
+	Playback.set(2, SPIFFS.open("/Samples/clap.wav"), SlotConfig{});
+	Playback.set(3, SPIFFS.open("/Samples/closedhihat.wav"), SlotConfig{});
+	Playback.set(4, SPIFFS.open("/Samples/openhihat.wav"), SlotConfig{});
+	Synthia.getInput()->setBtnPressCallback(Pins.get(Pin::Btn1), [](){ Playback.play(0); });
+	Synthia.getInput()->setBtnPressCallback(Pins.get(Pin::Btn2), [](){ Playback.play(1); });
+	Synthia.getInput()->setBtnPressCallback(Pins.get(Pin::Btn3), [](){ Playback.play(2); });
+	Synthia.getInput()->setBtnPressCallback(Pins.get(Pin::Btn4), [](){ Playback.play(3); });
+	Synthia.getInput()->setBtnPressCallback(Pins.get(Pin::Btn5), [](){ Playback.play(4); });
 
 	// Matrix test
+	Synthia.getCharlie().setBrightness(80);
+
 	Synthia.TrackMatrix.startAnimation(new MatrixAnimGIF(SPIFFS.open("/GIF/Swipe.gif")));
 	Synthia.SlidersMatrix.startAnimation(new MatrixAnimGIF(SPIFFS.open("/GIF/Intro/Sliders.gif")));
-	Synthia.CursorMatrix.startAnimation(new TempoAnim(&Synthia.CursorMatrix));
+
+	auto tempo = new TempoAnim(&Synthia.CursorMatrix);
+	tempo->setTempo(20);
+	Synthia.CursorMatrix.startAnimation(tempo);
 
 	uint32_t blinkTime = 0;
 	uint8_t blinkIndex = 0;

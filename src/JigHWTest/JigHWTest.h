@@ -47,7 +47,8 @@ private:
 	static constexpr int ButtonCount = 7;
 	static constexpr uint8_t CurrentVersion = 1;
 
-	void postTest();
+	void postTestFail();
+	void postTestPass();
 
 };
 
