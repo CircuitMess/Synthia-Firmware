@@ -27,6 +27,7 @@ void SaveState::loop(uint micros){
 		if(selectedAction == SaveAction::Save && myTask){
 			if(myTask->isStopped()){
 				pop();
+				return;
 			}
 		}else if(selectedAction == SaveAction::Load && myTask){
 			if(myTask->isStopped() && baker){
