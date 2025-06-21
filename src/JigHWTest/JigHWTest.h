@@ -37,6 +37,7 @@ private:
 	static bool SPIFFSTest();
 	static bool ButtonsTest();
 	static bool SlidersTest();
+	static bool EncodersTest();
 	static bool MicTest();
 
 	static uint32_t calcChecksum(fs::File& file);

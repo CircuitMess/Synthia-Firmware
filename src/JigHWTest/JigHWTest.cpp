@@ -33,6 +33,7 @@ JigHWTest::JigHWTest(){
 	tests.push_back({ JigHWTest::SPIFFSTest, "SPIFFS", [](){}});
 	tests.push_back({ JigHWTest::ButtonsTest, "Buttons", [](){}});
 	tests.push_back({ JigHWTest::SlidersTest, "Sliders", [](){}});
+	tests.push_back({ JigHWTest::EncodersTest, "Encoders", [](){}});
 	// tests.push_back({ JigHWTest::MicTest, "Mic", [](){}}); // TODO: uncomment once the test is done
 }
 
@@ -307,6 +308,67 @@ bool JigHWTest::SlidersTest(){
 	}
 
 	Synthia.clearMatrices();
+	return true;
+}
+
+bool JigHWTest::EncodersTest(){
+	const std::string string = "ENCODERS";
+	int32_t textScrollCursor = -Synthia.TrackMatrix.getWidth();
+	uint32_t textScrollTime = 0;
+
+	static bool lLeft, lRight, rLeft, rRight;
+	lLeft = lRight = rLeft = rRight = false;
+
+	Encoders.setLeftEncCallback([](int8_t val){
+		if(val == -1){
+			lLeft = true;
+		}else if(val == 1){
+			lRight = true;
+		}
+	});
+
+	Encoders.setRightEncCallback([](int8_t val){
+		if(val == -1){
+			rLeft = true;
+		}else if(val == 1){
+			rRight = true;
+		}
+	});
+
+	while(!lLeft || !lRight || !rLeft || !rRight){
+		LoopManager::loop();
+
+		if(millis() - textScrollTime > 100){
+			textScrollTime = millis();
+			textScrollCursor++;
+			if(textScrollCursor >= (int16_t) (string.size() * (3 + 1) - 1)){
+				textScrollCursor = -Synthia.TrackMatrix.getWidth();
+			}
+
+			Synthia.TrackMatrix.clear();
+			Synthia.TrackMatrix.drawString(-textScrollCursor, 5, string.c_str());
+			Synthia.TrackMatrix.push();
+		}
+
+		Synthia.SlidersMatrix.clear();
+		for(int x = 0; x < 2; x++){
+			for(int y = 0; y < 8; y++){
+				if((x == 0 && y < 4 && lLeft) || (x == 1 && y < 4 && rLeft)){
+					Synthia.SlidersMatrix.drawPixel(x, y, MatrixPixel::White);
+				}else if((x == 0 && y >= 4 && lRight) || (x == 1 && y >= 4 && rRight)){
+					Synthia.SlidersMatrix.drawPixel(x, y, MatrixPixel::White);
+				}else{
+					Synthia.SlidersMatrix.drawPixel(x, y, MatrixPixel::Off);
+				}
+			}
+		}
+		Synthia.SlidersMatrix.push();
+	}
+
+	Encoders.setLeftEncCallback(nullptr);
+	Encoders.setRightEncCallback(nullptr);
+	Synthia.clearMatrices();
+
 	return true;
 }
 
