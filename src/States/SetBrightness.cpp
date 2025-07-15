@@ -20,6 +20,8 @@ void SetBrightness::onStart(){
 	Synthia.TrackMatrix.startAnimation(&trackAnim);
 	Synthia.TrackRGB.startAnimation(&rgbTrackAnim);
 	Synthia.SlotRGB.startAnimation(&rgbSlotAnim);
+
+	LEDStrip.setLeft(255);
 }
 
 void SetBrightness::onStop(){
@@ -44,7 +46,6 @@ void SetBrightness::buttonPressed(uint i){
 }
 
 void SetBrightness::leftPotMove(uint8_t value){
-	setBrightness(value);
 }
 
 void SetBrightness::rightPotMove(uint8_t value){
@@ -64,5 +65,4 @@ void SetBrightness::setBrightness(uint8_t value){
 	}
 
 	LEDStrip.setRight(value);
-	LEDStrip.setLeft(value);
 }
