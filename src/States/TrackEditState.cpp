@@ -197,7 +197,6 @@ void TrackEditState::buttonPressed(uint i){
 		}
 	}
 	clickTimes[slot] = millis();
-
 }
 
 void TrackEditState::pushTrackVis(){
@@ -205,11 +204,7 @@ void TrackEditState::pushTrackVis(){
 }
 
 void TrackEditState::launchTest(){
-	Player.disable();
-	Playback.stop();
-
-	Synthia.clearMatrices();
-
+	//Revision 1 and onwards has no UserHWTest
 	if(HWRevision::get() > 0){
 		auto sett = new SetBrightness(this);
 		sett->push(this);
@@ -217,6 +212,10 @@ void TrackEditState::launchTest(){
 		stop();
 		delete this;
 
+		Player.disable();
+		Playback.stop();
+
+		Synthia.clearMatrices();
 		auto test = new UserHWTest::Test();
 		test->start();
 	}
