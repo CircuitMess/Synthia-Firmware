@@ -89,10 +89,10 @@ void setup(){
 
 	Playback.begin();
 	Player.begin();
+	//Player will be enabled after Intro finishes
+	Player.disable();
 	VMan.begin();
 	saveManager.begin();
-
-	LoopManager::removeListener(Synthia.getInput());
 
 	State* state = new Intro();
 	state->start();

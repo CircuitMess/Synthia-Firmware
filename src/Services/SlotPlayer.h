@@ -2,6 +2,7 @@
 #define SYNTHIA_FIRMWARE_SLOTPLAYER_H
 
 #include <Input/InputListener.h>
+#include <unordered_map>
 
 class SlotPlayer : public InputListener {
 public:
@@ -15,6 +16,8 @@ private:
 	void buttonPressed(uint id) override;
 
 	void playOnInput(uint8_t slot); //green pulse
+
+	std::unordered_map<uint8_t, uint8_t> KeyMap;
 };
 
 extern SlotPlayer Player;

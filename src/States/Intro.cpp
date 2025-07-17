@@ -6,6 +6,7 @@
 #include "TrackEditState.h"
 #include <Devices/Matrix/MatrixAnimGIF.h>
 #include <Loop/LoopManager.h>
+#include "../Services/SlotPlayer.h"
 
 static const char* TAG = "Intro";
 
@@ -145,5 +146,5 @@ void Intro::launch(){
 	auto trackEdit = new TrackEditState();
 	trackEdit->start();
 
-	LoopManager::addListener(Synthia.getInput());
+	Player.enable();
 }
