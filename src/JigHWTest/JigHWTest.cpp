@@ -31,11 +31,10 @@ JigHWTest::JigHWTest(){
 
 	tests.push_back({ JigHWTest::PSRAMTest, "PSRAM", [](){}});
 	tests.push_back({ JigHWTest::IS31Test, "Charlie", [](){}});
+	tests.push_back({ JigHWTest::AWTest, "AW9523", [](){}});
+	tests.push_back({ JigHWTest::XL9555Test, "XL9555", [](){}});
 	tests.push_back({ JigHWTest::SPIFFSTest, "SPIFFS", [](){}});
-	// tests.push_back({ JigHWTest::MicTest, "Mic", [](){}}); // TODO: uncomment once the test is done
-	tests.push_back({ JigHWTest::ButtonsTest, "Buttons", [](){}});
-	tests.push_back({ JigHWTest::SlidersTest, "Sliders", [](){}});
-	tests.push_back({ JigHWTest::EncodersTest, "Encoders", [](){}});
+	tests.push_back({ JigHWTest::MicTest, "Mic", [](){}});
 	tests.push_back({ JigHWTest::hwRevision, "HW rev", [](){}});
 }
 
@@ -46,11 +45,11 @@ void JigHWTest::start(){
 	Synthia.TrackMatrix.setFont(Matrix::SMALL);
 
 	const auto progress = [&](uint8_t test){
-		const float ratio = (float) (test+1) / (float) tests.size();
+		const float ratio = (float) (test + 1) / (float) tests.size();
 		Synthia.CursorMatrix.clear();
 
 		for(int i = 0; i < Synthia.CursorMatrix.getWidth(); i++){
-			const float pixel = (float) (i+1) / (float) Synthia.CursorMatrix.getWidth();
+			const float pixel = (float) (i + 1) / (float) Synthia.CursorMatrix.getWidth();
 			if(pixel <= ratio){
 				Synthia.CursorMatrix.drawPixel(i, MatrixPixel::White);
 			}
@@ -110,23 +109,9 @@ void JigHWTest::postTestFail(){
 }
 
 void JigHWTest::postTestPass(){
-	// Disable input
-	LoopManager::removeListener(&Sliders);
-	LoopManager::removeListener(&Encoders);
-
 	// Audio test
 	Playback.begin();
 	Playback.setVolume(200);
-	Playback.set(0, SPIFFS.open("/Samples/kick.wav"), SlotConfig{});
-	Playback.set(1, SPIFFS.open("/Samples/snare.wav"), SlotConfig{});
-	Playback.set(2, SPIFFS.open("/Samples/clap.wav"), SlotConfig{});
-	Playback.set(3, SPIFFS.open("/Samples/closedhihat.wav"), SlotConfig{});
-	Playback.set(4, SPIFFS.open("/Samples/openhihat.wav"), SlotConfig{});
-	Synthia.getInput()->setBtnPressCallback(Pins.get(Pin::Btn1), [](){ Playback.play(0); });
-	Synthia.getInput()->setBtnPressCallback(Pins.get(Pin::Btn2), [](){ Playback.play(1); });
-	Synthia.getInput()->setBtnPressCallback(Pins.get(Pin::Btn3), [](){ Playback.play(2); });
-	Synthia.getInput()->setBtnPressCallback(Pins.get(Pin::Btn4), [](){ Playback.play(3); });
-	Synthia.getInput()->setBtnPressCallback(Pins.get(Pin::Btn5), [](){ Playback.play(4); });
 
 	// Matrix test
 	Synthia.getCharlie().setBrightness(80);
@@ -228,194 +213,6 @@ bool JigHWTest::SPIFFSTest(){
 	return true;
 }
 
-bool JigHWTest::ButtonsTest(){
-	auto input = Synthia.getInput();
-
-	const std::string string = "BUTTONS";
-	int32_t textScrollCursor = -Synthia.TrackMatrix.getWidth();
-	uint32_t textScrollTime = 0;
-
-	std::vector<bool> pressed(ButtonCount, false);
-	std::vector<bool> released(ButtonCount, false);
-	uint8_t pressCount = 0;
-	uint8_t releaseCount = 0;
-	for(;;){
-		LoopManager::loop();
-
-		for(int i = 0; i < ButtonCount; i++){
-			if(input->getButtonState((int) ((int) Pins.get(Pin::Btn1) + i)) && !pressed[i]){
-				printf("Press %d\n\r", i);
-				pressed[i] = true;
-				pressCount++;
-			}else if(!input->getButtonState((int) ((int) Pins.get(Pin::Btn1) + i)) && pressed[i] && !released[i]){
-				printf("Release %d\n\r", i);
-				released[i] = true;
-				releaseCount++;
-			}
-		}
-
-		if(pressCount == ButtonCount && releaseCount == ButtonCount) break;
-
-		if(millis() - textScrollTime > 100){
-			textScrollTime = millis();
-			textScrollCursor++;
-			if(textScrollCursor >= (int16_t) (string.size() * (3 + 1) - 1)){
-				textScrollCursor = -Synthia.TrackMatrix.getWidth();
-			}
-
-			Synthia.TrackMatrix.clear();
-			Synthia.TrackMatrix.drawString(-textScrollCursor, 5, string.c_str());
-			Synthia.TrackMatrix.push();
-		}
-
-		Synthia.SlotRGB.clear();
-		for(int i = 0; i < 5; i++){
-			if(input->getButtonState((int) ((int) Pins.get(Pin::Btn1) + i))){
-				Synthia.SlotRGB.drawPixel(i, MatrixPixel::Yellow);
-			}else if(pressed[i] && released[i]){
-				Synthia.SlotRGB.drawPixel(i, MatrixPixel::Blue);
-			}else{
-				Synthia.SlotRGB.drawPixel(i, { 10, 10, 10, 255 });
-			}
-		}
-
-		Synthia.SlidersMatrix.clear();
-		for(int i = 0; i < 2; i++){
-			if(pressed[5+i]){
-				Synthia.SlidersMatrix.drawPixel(i, 6, MatrixPixel::White);
-				Synthia.SlidersMatrix.drawPixel(i, 7, MatrixPixel::White);
-			}
-		}
-
-		Synthia.SlotRGB.push();
-		Synthia.SlidersMatrix.push();
-	}
-
-	Synthia.clearMatrices();
-	return pressCount == ButtonCount && releaseCount == ButtonCount;
-}
-
-bool JigHWTest::SlidersTest(){
-	const std::string string = "SLIDERS";
-	int32_t textScrollCursor = -Synthia.TrackMatrix.getWidth();
-	uint32_t textScrollTime = 0;
-
-	uint8_t leftMin, leftMax, rightMin, rightMax;
-	leftMin = leftMax = Sliders.getLeftPotValue();
-	rightMin = rightMax = Sliders.getRightPotValue();
-
-	while(leftMin > 0 || leftMax < 255 || rightMin > 0 || rightMax < 255){
-		LoopManager::loop();
-
-		if(millis() - textScrollTime > 100){
-			textScrollTime = millis();
-			textScrollCursor++;
-			if(textScrollCursor >= (int16_t) (string.size() * (3 + 1) - 1)){
-				textScrollCursor = -Synthia.TrackMatrix.getWidth();
-			}
-
-			Synthia.TrackMatrix.clear();
-			Synthia.TrackMatrix.drawString(-textScrollCursor, 5, string.c_str());
-			Synthia.TrackMatrix.push();
-		}
-
-		leftMin = min(leftMin, Sliders.getLeftPotValue());
-		leftMax = max(leftMax, Sliders.getLeftPotValue());
-		rightMin = min(rightMin, Sliders.getRightPotValue());
-		rightMax = max(rightMax, Sliders.getRightPotValue());
-
-		uint8_t leftStart = map(255 - leftMax, 0, 255, 0, 7);
-		uint8_t leftEnd = map(255 - leftMin, 0, 255, 0, 7);
-		uint8_t rightStart = map(255 - rightMax, 0, 255, 0, 7);
-		uint8_t rightEnd = map(255 - rightMin, 0, 255, 0, 7);
-		if(leftStart == 7 && leftMin > 0){
-			leftStart = 6;
-		}
-		if(leftEnd == 0 && leftMax < 255){
-			leftEnd = 1;
-		}
-		if(rightStart == 7 && rightMin > 0){
-			rightStart = 6;
-		}
-		if(rightEnd == 0 && rightMax < 255){
-			rightEnd = 1;
-		}
-
-		Synthia.SlidersMatrix.clear();
-		for(int i = leftStart; i <= leftEnd; i++){
-			Synthia.SlidersMatrix.drawPixel(0, i, MatrixPixel::White);
-		}
-		for(int i = rightStart; i <= rightEnd; i++){
-			Synthia.SlidersMatrix.drawPixel(1, i, MatrixPixel::White);
-		}
-		Synthia.SlidersMatrix.push();
-	}
-
-	Synthia.clearMatrices();
-	return true;
-}
-
-bool JigHWTest::EncodersTest(){
-	const std::string string = "ENCODERS";
-	int32_t textScrollCursor = -Synthia.TrackMatrix.getWidth();
-	uint32_t textScrollTime = 0;
-
-	static bool lLeft, lRight, rLeft, rRight;
-	lLeft = lRight = rLeft = rRight = false;
-
-	Encoders.setLeftEncCallback([](int8_t val){
-		if(val == -1){
-			lLeft = true;
-		}else if(val == 1){
-			lRight = true;
-		}
-	});
-
-	Encoders.setRightEncCallback([](int8_t val){
-		if(val == -1){
-			rLeft = true;
-		}else if(val == 1){
-			rRight = true;
-		}
-	});
-
-	while(!lLeft || !lRight || !rLeft || !rRight){
-		LoopManager::loop();
-
-		if(millis() - textScrollTime > 100){
-			textScrollTime = millis();
-			textScrollCursor++;
-			if(textScrollCursor >= (int16_t) (string.size() * (3 + 1) - 1)){
-				textScrollCursor = -Synthia.TrackMatrix.getWidth();
-			}
-
-			Synthia.TrackMatrix.clear();
-			Synthia.TrackMatrix.drawString(-textScrollCursor, 5, string.c_str());
-			Synthia.TrackMatrix.push();
-		}
-
-		Synthia.SlidersMatrix.clear();
-		for(int x = 0; x < 2; x++){
-			for(int y = 0; y < 8; y++){
-				if((x == 0 && y < 4 && lLeft) || (x == 1 && y < 4 && rLeft)){
-					Synthia.SlidersMatrix.drawPixel(x, y, MatrixPixel::White);
-				}else if((x == 0 && y >= 4 && lRight) || (x == 1 && y >= 4 && rRight)){
-					Synthia.SlidersMatrix.drawPixel(x, y, MatrixPixel::White);
-				}else{
-					Synthia.SlidersMatrix.drawPixel(x, y, MatrixPixel::Off);
-				}
-			}
-		}
-		Synthia.SlidersMatrix.push();
-	}
-
-	Encoders.setLeftEncCallback(nullptr);
-	Encoders.setRightEncCallback(nullptr);
-	Synthia.clearMatrices();
-
-	return true;
-}
-
 bool JigHWTest::hwRevision(){
 	const auto rev = HWRevision::get();
 	if(rev != 0){
@@ -449,52 +246,15 @@ bool JigHWTest::MicTest(){
 
 	esp_err_t err = i2s_driver_install(I2S_NUM_0, &i2s_config, 0, nullptr);
 	if(err != ESP_OK){
-		test->log("Failed installing I2S driver", (uint32_t)err);
+		test->log("Failed installing I2S driver", (uint32_t) err);
 		return false;
 	}
 
 	err = i2s_set_pin(I2S_NUM_0, &i2s_pin_config);
 	if(err != ESP_OK){
-		test->log("Failed setting I2S pins", (uint32_t)err);
+		test->log("Failed setting I2S pins", (uint32_t) err);
 		return false;
 	}
-
-	Task waveTask("Wave", [](Task* task){
-		size_t bufferSize;
-		int16_t* buffer = nullptr;
-		float currentFreq;
-
-		auto generate = [&bufferSize, &buffer](float freq){
-			int numSamples = ceil(16000.0f / freq);
-			float omega = 2.0f * M_PI * freq;
-			float timeDelta = (1.0f / freq) / (float)numSamples;
-			float amp = 2000; // amplitude (max is 2^15 - 1)
-
-			bufferSize = numSamples * 2 * sizeof(int16_t);
-			buffer = static_cast<int16_t*>(realloc(buffer, bufferSize));
-			for(int i = 0; i < numSamples; i++){
-				buffer[i * 2 + 1] = sin(omega * timeDelta * (float)i) * amp;
-			}
-		};
-
-		size_t bytesWritten;
-
-		while(task->running){
-			float freq = *static_cast<float*>(task->arg);
-			if(freq == 0) continue;
-			if(freq != currentFreq){
-				generate(freq);
-				currentFreq = freq;
-			}
-
-			i2s_write(I2S_NUM_0, buffer, bufferSize, &bytesWritten, portMAX_DELAY);
-		}
-
-		free(buffer);
-	});
-
-	float currentFreq = 0;
-	waveTask.arg = &currentFreq;
 
 	int numSamples = 128;
 	size_t i2sBufferSize = numSamples * 2 * sizeof(int16_t);
@@ -502,84 +262,73 @@ bool JigHWTest::MicTest(){
 	int16_t* buffer = static_cast<int16_t*>(malloc(i2sBufferSize / 2));
 	memset(buffer, 0, i2sBufferSize / 2);
 
-	struct cmplx {
-		float re;
-		float im;
-	};
-	float W = 2.0f * M_PI / (float)numSamples;
-	cmplx* X = static_cast<cmplx*>(malloc(numSamples * sizeof(cmplx)));
-
-	auto recordFreq = [&currentFreq, buffer, i2sBuffer, i2sBufferSize](float freq){
-		currentFreq = freq;
-
-		size_t readSize;
-		// Pre-record
-		for(int i = 0; i < 100; i++){
-			i2s_read(I2S_NUM_0, (char*)i2sBuffer, i2sBufferSize, &readSize, portMAX_DELAY);
-		}
-
-		// Record
-		for(int j = 0; j < i2sBufferSize; j += 4){
-			int16_t sample = *(int16_t*)(&i2sBuffer[j + 2]) + 3705;
-			buffer[j / 4] = sample;
-		}
-	};
-
-	auto testFreq = [recordFreq, buffer, numSamples, W, X](float freq) -> bool{
-		recordFreq(freq);
-
-		// DFT
-		for(int i = 0; i < numSamples; i++){
-			X[i].re = X[i].im = 0;
-
-			for(int j = 0; j < numSamples; j++){
-				X[i].re += (float)buffer[j] * cos(W * (float)i * (float)j);
-				X[i].im -= (float)buffer[j] * sin(W * (float)i * (float)j);
-			}
-		}
-
-		auto f = [X](size_t i) -> float{
-			return sqrt(pow(X[i].re, 2) + pow(X[i].im, 2));
-		};
-
-		int target = round((float)numSamples * freq / 16000.0f);
-
-		float targetFreq = f(target);
-
-		test->log("amp", targetFreq);
-
-		return targetFreq > 50000
-			   && targetFreq > 3.0f * f(target - 3)
-			   && targetFreq > 3.0f * f(target - 2)
-			   && targetFreq > 3.0f * f(target + 2)
-			   && targetFreq > 3.0f * f(target + 3);
-	};
-
-	waveTask.start(2, 0);
-	delay(500);
-
-
-	float freqTests[] = {500, 750, 1250};
-	bool freqTest = true;
-
-	for(float & frequency : freqTests){
-		bool freq = testFreq(frequency);
-		freqTest = freqTest && freq;
-		if(!freq){
-			test->log("Failed on frequency", frequency);
-		}
+	size_t readSize;
+	// Pre-record
+	for(int i = 0; i < 100; i++){
+		i2s_read(I2S_NUM_0, (char*) i2sBuffer, i2sBufferSize, &readSize, portMAX_DELAY);
 	}
 
+	// Record
+	for(int j = 0; j < i2sBufferSize; j += 4){
+		int16_t sample = *(int16_t*) (&i2sBuffer[j + 2]);
+		buffer[j / 4] = sample;
+	}
+
+
 	err = i2s_driver_uninstall(I2S_NUM_0);
-	waveTask.stop();
 	delay(500);
 
 	if(err != ESP_OK){
-		test->log("Failed uninstalling I2S driver", (uint32_t)err);
+		test->log("Failed uninstalling I2S driver", (uint32_t) err);
+		return false;
+	}
+	bool noiseBelowThreshold = true; //Threshold of +/-10 samples
+	for(int i = 0; i < numSamples; i++){
+		if(buffer[i] < -10 || buffer[i] > 10){
+			noiseBelowThreshold = false;
+		}
+
+		printf("%d\n", buffer[i]);
+		if(buffer[i] == INT16_MIN || buffer[i] == INT16_MAX) return false;
+	}
+
+	if(noiseBelowThreshold){
+		test->log("No change in mic signal, possible defect", (uint32_t) 0);
 		return false;
 	}
 
-	return freqTest;
+	return true;
+}
+
+bool JigHWTest::AWTest(){
+	Wire.begin(Pins.get(Pin::I2C_Sda), Pins.get(Pin::I2C_Scl), 400000);
+	Wire1.begin(Pins.get(Pin::I2C2_Sda), Pins.get(Pin::I2C2_Scl), 400000);
+
+	Wire.beginTransmission(0x5B);
+	if(Wire.endTransmission() != 0){
+		test->log("AW9523 I2C0 response", false);
+		return false;
+	}
+
+	Wire1.beginTransmission(0x5B);
+	if(Wire1.endTransmission() != 0){
+		test->log("AW9523 I2C1 response", false);
+		return false;
+	}
+
+	return true;
+}
+
+bool JigHWTest::XL9555Test(){
+	Wire1.begin(Pins.get(Pin::I2C2_Sda), Pins.get(Pin::I2C2_Scl), 400000);
+
+	Wire1.beginTransmission(0b0100000);
+	if(Wire1.endTransmission() != 0){
+		test->log("XL9555 I2C1 response", false);
+		return false;
+	}
+
+	return true;
 }
 
 

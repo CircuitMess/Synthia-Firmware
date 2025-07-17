@@ -35,6 +35,7 @@ private:
 	static bool PSRAMTest();
 	static bool IS31Test();
 	static bool AWTest();
+	static bool XL9555Test();
 	static bool SPIFFSTest();
 	static bool MicTest();
 	static bool hwRevision();
