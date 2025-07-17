@@ -288,7 +288,6 @@ bool JigHWTest::MicTest(){
 			noiseBelowThreshold = false;
 		}
 
-		printf("%d\n", buffer[i]);
 		if(buffer[i] == INT16_MIN || buffer[i] == INT16_MAX) return false;
 	}
 
