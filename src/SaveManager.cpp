@@ -7,7 +7,7 @@ SaveManager saveManager;
 
 SaveData SaveManager::defaultData;
 
-SaveManager::SaveManager(){
+SaveManager::SaveManager() : actions(6, sizeof(LEDAction)){
 	for(int i = 0; i < 5; i++){
 		defaultData.slots[i].sample.type = (Sample::Type) i;
 		defaultData.slots[i].slotIndex = i;
@@ -55,7 +55,7 @@ SaveData SaveManager::load(uint8_t trackSlot, bool saveLastEdited){
 		saveLast(trackSlot);
 	}
 
-	RGBSlot.clear();
+	sendLEDAction({ .action = LEDAction::Clear });
 
 	return data;
 }
@@ -80,7 +80,7 @@ void SaveManager::store(uint8_t trackSlot, SaveData data, bool saveLastEdited){
 		saveLast(trackSlot);
 	}
 
-	RGBSlot.clear();
+	sendLEDAction({ .action = LEDAction::Clear });
 }
 
 void SaveManager::copyFile(File& source, File& destination){
@@ -127,7 +127,7 @@ void IRAM_ATTR SaveManager::loadRecordings(File& source, File& destination){
 
 		SPIFFS.remove(dstPath);
 
-		RGBSlot.setSolid(i, MatrixPixel::Blue);
+		sendLEDAction({ .action = LEDAction::Set, .slot = i, .color = MatrixPixel::Blue });
 
 		file = SPIFFS.open(srcPath);
 		if(!file){
@@ -167,7 +167,7 @@ void IRAM_ATTR SaveManager::storeRecordings(File& source, File& destination){
 
 		SPIFFS.remove(dstPath);
 
-		RGBSlot.setSolid(i, MatrixPixel::Blue);
+		sendLEDAction({ .action = LEDAction::Set, .slot = i, .color = MatrixPixel::Blue });
 
 		file = SPIFFS.open(srcPath);
 		if(!file){
@@ -238,4 +238,20 @@ uint8_t SaveManager::getLast(){
 
 SaveData SaveManager::loadLast(){
 	return load(getLast(), false);
+}
+
+void SaveManager::loop(uint micros){
+	LEDAction action = {};
+	if(actions.count() == 0) return;
+	if(!actions.receive(&action)) return;
+
+	if(action.action == LEDAction::Clear){
+		RGBSlot.clear();
+	}else if(action.action == LEDAction::Set){
+		RGBSlot.setSolid(action.slot, action.color);
+	}
+}
+
+void SaveManager::sendLEDAction(SaveManager::LEDAction action){
+	actions.send(&action);
 }

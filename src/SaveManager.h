@@ -2,9 +2,12 @@
 #define SYNTHIA_FIRMWARE_SAVEMANAGER_H
 
 #include <Arduino.h>
+#include <Loop/LoopListener.h>
+#include <Devices/Matrix/MatrixPixel.h>
+#include <Sync/Queue.h>
 #include "Model/SaveData.hpp"
 
-class SaveManager {
+class SaveManager : public LoopListener {
 public:
 	SaveManager();
 	void begin();
@@ -12,6 +15,8 @@ public:
 	SaveData load(uint8_t trackSlot, bool saveLastEdited = false);
 	void store(uint8_t trackSlot, SaveData config,  bool saveLastEdited = false);
 	SaveData loadLast();
+
+	void loop(uint micros) override;
 
 private:
 	void copyFile(File& source, File& destination);
@@ -23,6 +28,14 @@ private:
 	uint8_t getLast();
 
 	static SaveData defaultData;
+
+	struct LEDAction {
+		enum { Set, Clear } action;
+		uint8_t slot;
+		MatrixPixel color;
+	};
+	Queue actions;
+	void sendLEDAction(LEDAction action);
 };
 
 extern SaveManager saveManager;

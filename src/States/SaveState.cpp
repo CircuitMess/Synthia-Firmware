@@ -24,6 +24,13 @@ void SaveState::loop(uint micros){
 			LEDStrip.setMidFill(waitFill);
 		}
 
+		if(myTask && myTask->isStopped()){
+			for(int i = 0; i < 6; i++){
+				saveManager.loop(0);
+			}
+			LoopManager::removeListener(&saveManager);
+		}
+
 		if(selectedAction == SaveAction::Save && myTask){
 			if(myTask->isStopped()){
 				pop();
@@ -103,6 +110,7 @@ void SaveState::save(){
 	Input::getInstance()->removeListener(this);
 	Player.disable();
 
+	LoopManager::addListener(&saveManager);
 	myTask = std::unique_ptr<Task>(new Task("saveTask", [](Task* t){
 		saveManager.store(SaveState::currentSaveSlot, SaveState::saveData);
 		ESP_LOGI(TAG, "stored");
@@ -123,6 +131,7 @@ void SaveState::load(){
 	Input::getInstance()->removeListener(this);
 	Player.disable();
 
+	LoopManager::addListener(&saveManager);
 	myTask = std::unique_ptr<Task>(new Task("loadTask", [](Task* t){
 		auto &data = SaveState::saveData;
 		data = saveManager.load(SaveState::currentSaveSlot);
