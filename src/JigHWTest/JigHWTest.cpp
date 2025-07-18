@@ -283,9 +283,26 @@ bool JigHWTest::MicTest(){
 		return false;
 	}
 	bool noiseBelowThreshold = true; //Threshold of +/-10 samples
+
+	bool allBelowGunkThreshold = true;
+	int16_t maxSample = INT16_MIN;
+	int16_t minSample = INT16_MAX;
+
 	for(int i = 0; i < numSamples; i++){
 		if(buffer[i] < -10 || buffer[i] > 10){
 			noiseBelowThreshold = false;
+		}
+
+		if(buffer[i] > GunkedThreshold){
+			allBelowGunkThreshold = false;
+		}
+
+		if(buffer[i] < minSample){
+			minSample = buffer[i];
+		}
+
+		if(buffer[i] > maxSample){
+			maxSample = buffer[i];
 		}
 
 		if(buffer[i] == INT16_MIN || buffer[i] == INT16_MAX) return false;
@@ -293,6 +310,17 @@ bool JigHWTest::MicTest(){
 
 	if(noiseBelowThreshold){
 		test->log("No change in mic signal, possible defect", (uint32_t) 0);
+		return false;
+	}
+
+	//Mic membrane gunk test
+	uint16_t minMaxDiff = abs(maxSample - minSample);
+
+	test->log("Min-Max sample diff", (uint32_t) minMaxDiff);
+	test->log("Samples below gunk threshold", allBelowGunkThreshold);
+
+	if(allBelowGunkThreshold || minMaxDiff < MinMaxDiffThreshold){
+		test->log("Mic possibly gunked", (uint32_t) 1);
 		return false;
 	}
 

@@ -48,6 +48,9 @@ private:
 	void postTestFail();
 	void postTestPass();
 
+	static const uint16_t MinMaxDiffThreshold = 30;
+	static const int16_t GunkedThreshold = -3000;
+
 };
 
 #endif //CHATTER_FIRMWARE_JIGHWTEST_H
