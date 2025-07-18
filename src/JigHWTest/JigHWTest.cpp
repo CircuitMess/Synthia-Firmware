@@ -9,6 +9,7 @@
 #include "../Visualization/TempoAnim.h"
 #include <Loop/LoopManager.h>
 #include <Util/HWRevision.h>
+#include <Audio/SourceAAC.h>
 
 static const i2s_config_t i2s_config = {
 		.mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_RX),
@@ -110,8 +111,27 @@ void JigHWTest::postTestFail(){
 
 void JigHWTest::postTestPass(){
 	// Audio test
-	Playback.begin();
-	Playback.setVolume(200);
+	const i2s_config_t i2s_config = {
+			.mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_RX),
+			.sample_rate = SAMPLE_RATE,
+			.bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
+			.channel_format = I2S_CHANNEL_FMT_ONLY_RIGHT,
+			.communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
+			.intr_alloc_flags = 0,
+			.dma_buf_count = 2,
+			.dma_buf_len = 512,
+			.use_apll = false,
+			.tx_desc_auto_clear = true,
+			.fixed_mclk = 0
+	};
+
+	File audioFile(RamFile::open(SPIFFS.open("/Test.aac")));
+	FileDataSource fileSource(audioFile);
+	SourceAAC source(fileSource);
+	OutputI2S output(i2s_config, i2s_pin_config);
+	output.setSource(&source);
+	output.setGain(0.3);
+	output.start();
 
 	// Matrix test
 	Synthia.getCharlie().setBrightness(80);
@@ -126,9 +146,17 @@ void JigHWTest::postTestPass(){
 	uint32_t blinkTime = 0;
 	uint8_t blinkIndex = 0;
 	std::array<MatrixPixel, 3> blinkColors = { MatrixPixel::Red, MatrixPixel::Green, MatrixPixel::Blue };
+	uint32_t beepTime = millis();
 
 	for(;;){
 		LoopManager::loop();
+		output.loop(0);
+
+		if(millis() - beepTime >= 1000){
+			beepTime = millis();
+			source.seek(0, SeekSet);
+			output.start();
+		}
 
 		if(millis() - blinkTime < 500) continue;
 		blinkTime = millis();
